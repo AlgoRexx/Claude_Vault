@@ -1,0 +1,459 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#1a2e2a;--cv:#FF4B35;--dark:#1C1C1C;--surf:#252525;--elev:#2E2E2E;
+    --brd:#333;--txt:#F0EDE8;--sec:#9CA3AF;--dim:#555;
+    --mono:'IBM Plex Mono','Courier New',monospace;
+    --disp:'Barlow Condensed','Arial Narrow',system-ui;
+    --body:'DM Sans',system-ui;
+  }
+  .scene{background:#0f1e1b;padding:0;border-radius:10px;overflow:hidden;font-family:var(--body)}
+
+  /* ── MENU BAR ── */
+  .menubar{
+    background:var(--bg);height:28px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 12px;border-bottom:1px solid rgba(255,255,255,0.08)
+  }
+  .mb-left{display:flex;align-items:center;gap:14px}
+  .mb-right{display:flex;align-items:center;gap:10px}
+  .mb-apple{
+    width:13px;height:13px;background:rgba(255,255,255,0.55);
+    clip-path:polygon(50% 0%,65% 15%,80% 10%,80% 40%,100% 55%,80% 70%,80% 90%,50% 100%,20% 90%,20% 70%,0% 55%,20% 40%,20% 10%,35% 15%)
+  }
+  .mb-app{font-size:12px;font-weight:600;color:rgba(255,255,255,0.85)}
+  .mb-menu{font-size:11px;color:rgba(255,255,255,0.55);cursor:pointer}
+  .mb-menu:hover{color:rgba(255,255,255,0.8)}
+
+  /* system icons placeholder */
+  .mb-icon{
+    width:14px;height:14px;opacity:0.5;display:flex;align-items:center;justify-content:center
+  }
+  .mb-icon svg{width:14px;height:14px;fill:rgba(255,255,255,0.7)}
+  .mb-clock{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,0.75)}
+
+  /* CV icon in bar */
+  .cv-trigger{
+    display:flex;align-items:center;gap:5px;padding:2px 6px;cursor:pointer;
+    border-radius:4px;transition:background 0.1s;position:relative
+  }
+  .cv-trigger:hover{background:rgba(255,75,53,0.15)}
+  .cv-trigger.active{background:rgba(255,75,53,0.2)}
+  .cv-pixmark{display:grid;grid-template-columns:repeat(5,3px);grid-template-rows:repeat(5,3px);gap:1px}
+  .px-on{background:var(--cv)}
+  .px-off{background:transparent}
+  .cv-badge{
+    width:6px;height:6px;background:var(--cv);border-radius:0;
+    position:absolute;top:3px;right:3px
+  }
+  .cv-badge.pulse{animation:bdpulse 1.2s ease-in-out infinite}
+  @keyframes bdpulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+  /* ── DESKTOP ── */
+  .desktop{
+    background:#0a1a17;min-height:520px;display:flex;
+    justify-content:flex-end;padding-top:6px;padding-right:56px;
+    position:relative
+  }
+
+  /* ── POPOVER ── */
+  .popover{
+    width:320px;background:var(--dark);border:1px solid var(--brd);
+    border-radius:0 0 8px 8px;overflow:hidden;
+    transition:opacity 0.15s,transform 0.15s;
+    transform-origin:top right;
+  }
+  .popover.hidden{opacity:0;transform:scaleY(0.92);pointer-events:none}
+
+  /* header */
+  .pov-head{
+    background:#111;padding:10px 14px 8px;border-bottom:1px solid var(--brd);
+    display:flex;align-items:center;justify-content:space-between
+  }
+  .pov-brand{display:flex;align-items:center;gap:8px}
+  .pov-name{
+    font-family:var(--disp);font-size:18px;font-weight:900;
+    text-transform:uppercase;color:var(--cv);letter-spacing:0.04em
+  }
+  .pov-state{
+    display:flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em
+  }
+  .state-dot{width:5px;height:5px;flex-shrink:0}
+  .dot-active{background:var(--sec)}
+  .dot-near{background:rgba(255,75,53,0.7)}
+  .dot-final{background:var(--cv);animation:bdpulse 1s infinite}
+  .state-label-near{color:rgba(255,75,53,0.7)}
+  .state-label-final{color:var(--cv)}
+  .state-label-active{color:var(--sec)}
+
+  /* tabs */
+  .tabs{display:flex;border-bottom:1px solid var(--brd);background:#111}
+  .tab{
+    flex:1;padding:6px 0;text-align:center;
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;
+    transition:color 0.1s,border-color 0.1s
+  }
+  .tab:hover{color:var(--sec)}
+  .tab.active{color:var(--cv);border-bottom-color:var(--cv)}
+
+  /* panels */
+  .panel{display:none;padding:0}
+  .panel.show{display:block}
+
+  /* ── SESSION PANEL ── */
+  .sess-block{padding:12px 14px;border-bottom:1px solid var(--brd)}
+  .sess-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .sess-key{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--dim)}
+  .sess-val{font-family:var(--mono);font-size:10px;color:var(--txt)}
+  .sess-val.coral{color:var(--cv)}
+  .progress-bar{height:3px;background:var(--brd);margin-top:8px}
+  .progress-fill{height:3px;background:rgba(255,75,53,0.7);width:73%}
+
+  /* ── FILES PANEL ── */
+  .file-entry{
+    display:grid;grid-template-columns:1fr 52px;
+    padding:7px 14px;border-bottom:1px solid rgba(51,51,51,0.6);
+    cursor:pointer;transition:background 0.08s
+  }
+  .file-entry:hover{background:var(--surf)}
+  .file-entry:last-child{border-bottom:none}
+  .file-n{
+    font-family:var(--mono);font-size:10px;color:var(--txt);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;text-align:left
+  }
+  .file-n span{direction:ltr;unicode-bidi:bidi-override}
+  .file-r{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .file-ts{font-family:var(--mono);font-size:9px;color:var(--dim)}
+  .file-type{font-family:var(--mono);font-size:8px;color:var(--cv);opacity:0.7;text-transform:uppercase}
+
+  /* ── SUGGEST PANEL ── */
+  .sug-header{
+    padding:8px 14px;border-bottom:1px solid var(--brd);background:#111;
+    display:flex;align-items:center;justify-content:space-between
+  }
+  .sug-title{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--cv)}
+  .sug-btn{
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.06em;
+    padding:3px 10px;border:1px solid var(--cv);background:transparent;color:var(--cv);cursor:pointer
+  }
+  .sug-btn:hover{background:rgba(255,75,53,0.1)}
+  .sug-row{
+    display:flex;align-items:center;gap:10px;
+    padding:7px 14px;border-bottom:1px solid rgba(51,51,51,0.6);cursor:pointer;
+    transition:background 0.08s
+  }
+  .sug-row:hover{background:var(--surf)}
+  .chk{
+    width:12px;height:12px;border:1px solid var(--cv);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center
+  }
+  .chk.on{background:var(--cv)}
+  .chk.on::after{
+    content:'';width:5px;height:3px;border-left:1.5px solid #1C1C1C;
+    border-bottom:1.5px solid #1C1C1C;transform:rotate(-45deg) translate(1px,-1px);display:block
+  }
+  .sug-info{flex:1;min-width:0}
+  .sug-name{font-family:var(--mono);font-size:10px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sug-meta{font-family:var(--mono);font-size:9px;color:var(--dim)}
+  .conf{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.06em}
+  .conf-h{color:var(--cv)}
+  .conf-m{color:rgba(255,75,53,0.55)}
+  .conf-l{color:rgba(255,75,53,0.25)}
+
+  /* ── LOG PANEL ── */
+  .log-entry{
+    padding:5px 14px;border-bottom:1px solid rgba(51,51,51,0.4);
+    display:grid;grid-template-columns:60px 72px 1fr;gap:0
+  }
+  .log-ts{font-family:var(--mono);font-size:9px;color:var(--dim)}
+  .log-ev{font-family:var(--mono);font-size:9px;text-transform:uppercase}
+  .ev-cr{color:var(--cv)}
+  .ev-lk{color:rgba(255,75,53,0.75)}
+  .ev-rj{color:rgba(255,75,53,0.4)}
+  .ev-dd{color:rgba(255,75,53,0.35)}
+  .log-f{font-family:var(--mono);font-size:9px;color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ── ACTIONS PANEL ── */
+  .act-section{padding:10px 14px;border-bottom:1px solid var(--brd)}
+  .act-label{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin-bottom:8px}
+  .act-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .act-btn{
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.06em;
+    padding:6px 10px;border:1px solid var(--brd);background:var(--surf);color:var(--sec);
+    cursor:pointer;text-align:left;transition:all 0.1s
+  }
+  .act-btn:hover{border-color:var(--cv);color:var(--cv)}
+  .act-btn.warn{border-color:rgba(255,75,53,0.3);color:rgba(255,75,53,0.5)}
+  .act-btn.warn:hover{border-color:var(--cv);color:var(--cv)}
+  .state-btns{display:flex;flex-direction:column;gap:4px}
+  .state-set-btn{
+    font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.06em;
+    padding:5px 10px;border:1px solid var(--brd);background:transparent;color:var(--sec);
+    cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;transition:all 0.1s
+  }
+  .state-set-btn:hover{border-color:var(--cv);color:var(--cv)}
+  .state-set-btn.current{border-color:rgba(255,75,53,0.5);color:rgba(255,75,53,0.7)}
+  .ssb-dot{width:5px;height:5px;flex-shrink:0}
+
+  /* statusbar */
+  .pov-status{
+    background:#111;padding:5px 14px;
+    display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--brd)
+  }
+  .ps-item{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.07em;color:var(--dim);display:flex;align-items:center;gap:4px}
+  .ps-dot{width:4px;height:4px;background:var(--cv);animation:bdpulse 1.5s infinite}
+
+  /* cleanup banner */
+  .cleanup-banner{
+    background:rgba(255,75,53,0.07);border-bottom:1px solid rgba(255,75,53,0.2);
+    padding:8px 14px;display:flex;align-items:center;justify-content:space-between
+  }
+  .cb-text{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:rgba(255,75,53,0.7)}
+  .cb-btn{
+    font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.07em;
+    padding:3px 8px;border:1px solid rgba(255,75,53,0.5);background:transparent;
+    color:rgba(255,75,53,0.7);cursor:pointer
+  }
+  .cb-btn:hover{border-color:var(--cv);color:var(--cv)}
+</style>
+
+<div class="scene">
+
+  <!-- MENU BAR -->
+  <div class="menubar">
+    <div class="mb-left">
+      <div class="mb-apple"></div>
+      <span class="mb-app">Finder</span>
+      <span class="mb-menu">File</span>
+      <span class="mb-menu">Edit</span>
+      <span class="mb-menu">View</span>
+      <span class="mb-menu">Go</span>
+      <span class="mb-menu">Window</span>
+    </div>
+    <div class="mb-right">
+      <!-- system icons (simplified) -->
+      <div class="mb-icon">
+        <svg viewBox="0 0 14 14"><rect x="1" y="3" width="12" height="8" rx="1" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1"/><rect x="5" y="11" width="4" height="1.5" fill="rgba(255,255,255,0.6)"/></svg>
+      </div>
+      <div class="mb-icon">
+        <svg viewBox="0 0 14 14"><path d="M7 2C4.5 2 2.5 4 2.5 6.5c0 1.5.7 2.8 1.8 3.7L7 13l2.7-2.8C10.8 9.3 11.5 8 11.5 6.5 11.5 4 9.5 2 7 2z" fill="rgba(255,255,255,0.6)"/></svg>
+      </div>
+      <div class="mb-icon">
+        <svg viewBox="0 0 14 14"><path d="M7 1L8.5 5H13L9.5 7.5 11 12 7 9 3 12 4.5 7.5 1 5H5.5z" fill="rgba(255,255,255,0.6)"/></svg>
+      </div>
+      <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.5)">53%</span>
+      <div class="mb-icon">
+        <svg viewBox="0 0 14 14"><path d="M1 9C2.5 6 4.5 4.5 7 4.5S11.5 6 13 9" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round"/><path d="M3 10.5C4 8.5 5.5 7.5 7 7.5S10 8.5 11 10.5" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="12" r="0.8" fill="rgba(255,255,255,0.6)"/></svg>
+      </div>
+      <!-- ClaudeVault trigger -->
+      <div class="cv-trigger active" id="cv-btn" onclick="togglePop()">
+        <div class="cv-pixmark">
+          <div class="px-off"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-off"></div>
+          <div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div>
+          <div class="px-on"></div><div class="px-off"></div><div class="px-off"></div><div class="px-off"></div><div class="px-on"></div>
+          <div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div>
+          <div class="px-off"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-off"></div>
+        </div>
+        <div class="cv-badge pulse"></div>
+      </div>
+      <div class="mb-icon" style="opacity:0.4">
+        <svg viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1"/><line x1="7" y1="4" x2="7" y2="7" stroke="rgba(255,255,255,0.7)" stroke-width="1" stroke-linecap="round"/><line x1="7" y1="7" x2="9" y2="9" stroke="rgba(255,255,255,0.7)" stroke-width="1" stroke-linecap="round"/></svg>
+      </div>
+      <span class="mb-clock">14:23</span>
+    </div>
+  </div>
+
+  <!-- DESKTOP with POPOVER -->
+  <div class="desktop">
+    <div class="popover" id="popover">
+
+      <!-- HEAD -->
+      <div class="pov-head">
+        <div class="pov-brand">
+          <div class="cv-pixmark" style="grid-template-columns:repeat(5,4px);grid-template-rows:repeat(5,4px);gap:1.5px">
+            <div class="px-off"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-off"></div>
+            <div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div>
+            <div class="px-on"></div><div class="px-off"></div><div class="px-off"></div><div class="px-off"></div><div class="px-on"></div>
+            <div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div>
+            <div class="px-off"></div><div class="px-off"></div><div class="px-on"></div><div class="px-off"></div><div class="px-off"></div>
+          </div>
+          <span class="pov-name">ClaudeVault</span>
+        </div>
+        <div class="pov-state">
+          <div class="state-dot dot-near"></div>
+          <span class="state-label-near">Near Limit</span>
+        </div>
+      </div>
+
+      <!-- CLEANUP BANNER -->
+      <div class="cleanup-banner">
+        <span class="cb-text">⚠ Cleanup: trading-v1 · 42 files · 1.8GB</span>
+        <button class="cb-btn">Review</button>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('session',this)">Session</div>
+        <div class="tab" onclick="switchTab('files',this)">Files</div>
+        <div class="tab" onclick="switchTab('suggest',this)">Suggest</div>
+        <div class="tab" onclick="switchTab('log',this)">Log</div>
+        <div class="tab" onclick="switchTab('actions',this)">Actions</div>
+      </div>
+
+      <!-- SESSION PANEL -->
+      <div class="panel show" id="p-session">
+        <div class="sess-block">
+          <div class="sess-row"><span class="sess-key">Session ID</span><span class="sess-val coral">TRD-A1B2</span></div>
+          <div class="sess-row"><span class="sess-key">Project</span><span class="sess-val">trading-system-v1</span></div>
+          <div class="sess-row"><span class="sess-key">Started</span><span class="sess-val">14:01:34</span></div>
+          <div class="sess-row"><span class="sess-key">State</span><span class="sess-val coral">NEAR_LIMIT</span></div>
+          <div class="sess-row"><span class="sess-key">Files Linked</span><span class="sess-val">5</span></div>
+          <div class="sess-row"><span class="sess-key">Messages</span><span class="sess-val coral">22 / 30</span></div>
+          <div class="progress-bar"><div class="progress-fill"></div></div>
+        </div>
+        <div class="sess-block">
+          <div class="sess-row"><span class="sess-key">Watcher</span><span class="sess-val" style="color:#4ade80">WATCHING</span></div>
+          <div class="sess-row"><span class="sess-key">Watch Dir</span><span class="sess-val">~/Downloads</span></div>
+          <div class="sess-row"><span class="sess-key">Last Detect</span><span class="sess-val">14:23:01</span></div>
+          <div class="sess-row"><span class="sess-key">DB Size</span><span class="sess-val">148 KB</span></div>
+        </div>
+      </div>
+
+      <!-- FILES PANEL -->
+      <div class="panel" id="p-files">
+        <div class="file-entry">
+          <div class="file-n" style="border-left:2px solid var(--cv);padding-left:6px"><span>model_results_20260318_a3f9c1b2.csv</span></div>
+          <div class="file-r"><span class="file-ts">14:23</span><span class="file-type">CSV</span></div>
+        </div>
+        <div class="file-entry">
+          <div class="file-n"><span>training_data_20260318_cc2f5d91.json</span></div>
+          <div class="file-r"><span class="file-ts">14:19</span><span class="file-type">JSON</span></div>
+        </div>
+        <div class="file-entry">
+          <div class="file-n"><span>architecture_diagram_v3_e74ab120.png</span></div>
+          <div class="file-r"><span class="file-ts">14:01</span><span class="file-type">PNG</span></div>
+        </div>
+        <div class="file-entry">
+          <div class="file-n"><span>backtest_report_final_0091f2a3.pdf</span></div>
+          <div class="file-r"><span class="file-ts">13:55</span><span class="file-type">PDF</span></div>
+        </div>
+        <div class="file-entry">
+          <div class="file-n"><span>indicators_config_5d71ef98.py</span></div>
+          <div class="file-r"><span class="file-ts">13:41</span><span class="file-type">PY</span></div>
+        </div>
+        <div class="file-entry" style="padding:6px 14px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.07em">2 unlinked files</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--cv)">View All →</span>
+        </div>
+      </div>
+
+      <!-- SUGGEST PANEL -->
+      <div class="panel" id="p-suggest">
+        <div class="sug-header">
+          <span class="sug-title">New Session · Suggested<sup style="color:var(--cv);font-size:7px">3</sup></span>
+          <button class="sug-btn">Upload Selected</button>
+        </div>
+        <div class="sug-row" onclick="toggleChk(this)">
+          <div class="chk on"></div>
+          <div class="sug-info">
+            <div class="sug-name">model_results_20260318_a3f9c1b2.csv</div>
+            <div class="sug-meta">5 min ago · 42 KB</div>
+          </div>
+          <span class="conf conf-h">HIGH</span>
+        </div>
+        <div class="sug-row" onclick="toggleChk(this)">
+          <div class="chk on"></div>
+          <div class="sug-info">
+            <div class="sug-name">training_data_20260318_cc2f5d91.json</div>
+            <div class="sug-meta">9 min ago · 1.2 MB</div>
+          </div>
+          <span class="conf conf-h">HIGH</span>
+        </div>
+        <div class="sug-row" onclick="toggleChk(this)">
+          <div class="chk"></div>
+          <div class="sug-info">
+            <div class="sug-name">old_data_backup_20260101_112ba234.csv</div>
+            <div class="sug-meta">47 days ago · 220 KB</div>
+          </div>
+          <span class="conf conf-l">LOW</span>
+        </div>
+      </div>
+
+      <!-- LOG PANEL -->
+      <div class="panel" id="p-log">
+        <div class="log-entry"><span class="log-ts">14:23:01</span><span class="log-ev ev-cr">CREATED</span><span class="log-f">model_results...a3f9c1b2.csv</span></div>
+        <div class="log-entry"><span class="log-ts">14:23:01</span><span class="log-ev ev-lk">LINKED</span><span class="log-f">→ TRD-A1B2</span></div>
+        <div class="log-entry"><span class="log-ts">14:19:44</span><span class="log-ev ev-cr">CREATED</span><span class="log-f">training_data...cc2f5d91.json</span></div>
+        <div class="log-entry"><span class="log-ts">13:55:12</span><span class="log-ev ev-dd">DEDUP</span><span class="log-f">→ cc2f5d91 (existing)</span></div>
+        <div class="log-entry"><span class="log-ts">13:41:08</span><span class="log-ev ev-rj">REJECTED</span><span class="log-f">report.pdf.crdownload</span></div>
+        <div class="log-entry"><span class="log-ts">13:41:07</span><span class="log-ev ev-lk">LINKED</span><span class="log-f">indicators_config...py → TRD-A1B2</span></div>
+        <div class="log-entry"><span class="log-ts">14:01:34</span><span class="log-ev ev-cr">CREATED</span><span class="log-f">architecture_diagram_v3.png</span></div>
+        <div class="log-entry"><span class="log-ts">13:30:00</span><span class="log-ev ev-lk">SESSION START</span><span class="log-f">TRD-A1B2</span></div>
+      </div>
+
+      <!-- ACTIONS PANEL -->
+      <div class="panel" id="p-actions">
+        <div class="act-section">
+          <div class="act-label">Set Session State</div>
+          <div class="state-btns">
+            <button class="state-set-btn" onclick="setState('active',this)"><div class="ssb-dot" style="background:var(--sec)"></div>Active</button>
+            <button class="state-set-btn current" onclick="setState('near',this)"><div class="ssb-dot" style="background:rgba(255,75,53,0.7)"></div>Near Limit</button>
+            <button class="state-set-btn" onclick="setState('final',this)"><div class="ssb-dot" style="background:var(--cv)"></div>Final Window</button>
+            <button class="state-set-btn" onclick="setState('closed',this)"><div class="ssb-dot" style="background:#444"></div>Close Session</button>
+          </div>
+        </div>
+        <div class="act-section">
+          <div class="act-label">Quick Actions</div>
+          <div class="act-grid">
+            <button class="act-btn">New Session</button>
+            <button class="act-btn">Open Vault</button>
+            <button class="act-btn">Suggest Files</button>
+            <button class="act-btn">Unlinked Files</button>
+            <button class="act-btn warn">Run Cleanup</button>
+            <button class="act-btn">Pause Watcher</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM STATUS -->
+      <div class="pov-status">
+        <div class="ps-item"><div class="ps-dot"></div>WATCHING</div>
+        <div class="ps-item">LAST · 14:23:01</div>
+        <div class="ps-item">DB · 148 KB</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePop(){
+  var p=document.getElementById('popover');
+  var b=document.getElementById('cv-btn');
+  p.classList.toggle('hidden');
+  b.classList.toggle('active');
+}
+function switchTab(id,el){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show')});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.getElementById('p-'+id).classList.add('show');
+  el.classList.add('active');
+}
+function toggleChk(row){
+  var c=row.querySelector('.chk');
+  c.classList.toggle('on');
+}
+function setState(s,btn){
+  document.querySelectorAll('.state-set-btn').forEach(function(b){b.classList.remove('current')});
+  btn.classList.add('current');
+  var labels={'active':['ACTIVE','dot-active','state-label-active'],'near':['NEAR_LIMIT','dot-near','state-label-near'],'final':['FINAL_WINDOW','dot-final','state-label-final'],'closed':['CLOSED','','']};
+  var l=labels[s];
+  var dot=document.querySelector('.pov-state .state-dot');
+  var lbl=document.querySelector('.pov-state span');
+  dot.className='state-dot '+l[1];
+  lbl.className=l[2];
+  lbl.textContent=l[0];
+}
+</script>

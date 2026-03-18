@@ -29,8 +29,8 @@ const db = initDb(config.dbPath);
 const program = new Command();
 
 program
-  .name('claude-manager')
-  .description('Claude Manager: File Pipeline & Session Continuity System')
+  .name('claude-vault')
+  .description('ClaudeVault: File Pipeline & Session Continuity System')
   .version('0.1.0');
 
 // Project Commands
@@ -136,7 +136,7 @@ program
   .description('Show system status')
   .action(() => {
     const activeSession = getActiveSession(db);
-    console.log(chalk.hex('#FF4B35').bold('CLAUDE MANAGER STATUS'));
+    console.log(chalk.hex('#FF4B35').bold('CLAUDE VAULT STATUS'));
     if (activeSession) {
       console.log(`↳ ${chalk.bold('ACTIVE SESSION')}: ${activeSession.session_id}`);
       console.log(`↳ ${chalk.bold('PROJECT ID')}:     ${activeSession.project_id}`);

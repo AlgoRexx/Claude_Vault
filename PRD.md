@@ -61,7 +61,7 @@ This PRD explicitly does not cover:
 
 **Acceptance criteria:**
 - File watcher detects the file within 5 seconds of it stabilizing (no partial downloads)
-- File is hashed, renamed to a stable format, and moved to the correct project directory
+- File is hashed, renamed to a stable format, and moved to the correct project directory (`~/Downloads/claude-vault/projects/<project_id>/sessions/<session_id>/files`) or unlinked directory (`~/Downloads/claude-vault/unlinked/<date>`)
 - Metadata is written to the DB immediately
 - Duplicate files (same hash) are not stored twice — the existing record is linked instead
 
@@ -165,3 +165,77 @@ This PRD explicitly does not cover:
 | File watcher misses partial downloads | Medium | Enforce stabilization check (size + extension) before ingestion |
 | Hash collision causes incorrect deduplication | Low | Use SHA-256; document the assumption |
 | User accidentally deletes active project files via cleanup prompt | Medium | Require typed confirmation for delete; archive is the default action |
+
+---
+
+## 11. Multi-Session & Session History (v1.1 Addition)
+
+### 11.1 Multi-Session Switching
+
+> As a user working across multiple projects simultaneously, I want to switch between active sessions from the menu bar widget — so I don't lose context when moving between projects.
+
+**Acceptance criteria:**
+- Multiple sessions can be ACTIVE at the same time (one per project)
+- The widget header shows the **currently focused** session
+- A session switcher in the SESSION tab lists all active sessions
+- Switching focus does not close or modify any session — it only changes which session new file ingestions are linked to
+- The focused session is persisted across widget close/open
+- Maximum concurrent active sessions: configurable (default: 5)
+
+---
+
+### 11.2 Session Alias (Readable Name)
+
+> As a user, I want to give each session a readable name I choose — so I can identify sessions at a glance without reading hash IDs.
+
+**Acceptance criteria:**
+- Every session has an optional `alias` field set by the user
+- The alias is display-only — the backend always uses the hash session_id as the primary key
+- Display format everywhere in the UI: **Alias (Primary, Orange)** on top, **Hash (Secondary, Grey)** below. Action buttons are compact icons.
+- If no alias is set, display shows only the hash: `TRD-A1B2`
+- The alias can be set or changed at any time, including after a session is closed
+- Alias is limited to 32 characters, alphanumeric + hyphens + underscores only
+- Renaming is inline and discoverable via double-click and a text-cursor hover (no separate modal).
+- The alias is stored in the `sessions` table alongside the hash ID — never replaces it
+
+---
+
+### 11.3 Accidental Session Close Recovery
+
+> As a user, if I close a session accidentally, I want to find it in session history and reopen it — so I don't lose the file links and context I built.
+
+**Acceptance criteria:**
+- All sessions regardless of state (ACTIVE, CLOSED, FINAL_WINDOW) are accessible in session history
+- Closed sessions appear in a HISTORY section below active sessions in the SESSION tab
+- Reopening a closed session sets its state back to ACTIVE and restores all linked file associations
+- No data is lost when a session is closed — closing is a state change, not a deletion
+- The history list shows: `HASH ~ alias`, project name, closed timestamp, file count
+- History is sorted by `ended_at` descending (most recently closed first)
+- History is not paginated in v1 — all closed sessions for the current project are shown
+
+---
+
+### 11.4 Full Session Deletion (Permanent)
+
+> As a user, when I delete a session, I want all associated files and its dedicated session folder to be permanently removed from disk — so my file system remains clean and organized.
+
+**Acceptance criteria:**
+- Deleting a session from the widget triggers a **permanent deletion** warning requiring explicit confirmation.
+- All files previously linked to the session (within `~/Downloads/claude-vault/projects/<project_id>/sessions/<session_id>/files`) are deleted from disk.
+- The entire session directory (`~/Downloads/claude-vault/projects/<project_id>/sessions/<session_id>`) is deleted from disk.
+- All database entries for the session and its file links are removed.
+- If the session's project folder becomes empty after session deletion, the project folder itself is deleted (e.g., `~/Downloads/claude-vault/projects/<project_id>`).
+- Files initially ingested as `unlinked` and later linked to a session, upon session deletion, are **not** moved back to `unlinked` but are instead permanently deleted if they reside within the session's folder.
+- A "Reveal in Finder" button is present on each session row, allowing users to quickly locate the session's folder on disk.
+- Any errors during file system deletion are logged but do not prevent database cleanup.
+
+---
+
+## 12. Updated Open Questions
+
+| # | Question | Owner | Status |
+|---|----------|-------|--------|
+| 6 | What is the max concurrent active sessions limit? | Product | Default 5, configurable |
+| 7 | Should alias changes propagate to already-exported summaries? | Product | Unresolved |
+| 8 | When a closed session is reopened, does it inherit the original session's state or start as ACTIVE? | Eng | Start as ACTIVE |
+| 9 | Should alias be searchable/filterable in the session history list? | Product | Unresolved |

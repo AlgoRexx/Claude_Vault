@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs-extra');
 
 function initDb(dbPath) {
-  // Ensure the directory exists
   fs.ensureDirSync(path.dirname(dbPath));
 
   const db = new Database(dbPath);
@@ -20,7 +19,16 @@ function initDb(dbPath) {
       ended_at     INTEGER,
       state        TEXT NOT NULL DEFAULT 'ACTIVE',
       -- ACTIVE | NEAR_LIMIT | FINAL_WINDOW | CLOSED
-      summary_path TEXT
+      summary_path TEXT,
+      alias        TEXT,
+      focused_at   INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS session_focus (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id  TEXT NOT NULL,
+      focused_at  INTEGER NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions(session_id)
     );
 
     CREATE TABLE IF NOT EXISTS files (

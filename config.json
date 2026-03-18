@@ -1,12 +1,13 @@
 {
   "watchDir": "~/Downloads",
-  "projectStore": "~/Downloads/claude-manager/projects",
-  "unlinkedStore": "~/Downloads/claude-manager/unlinked",
-  "archiveDir": "~/Downloads/claude-manager/archive",
-  "dbPath": "~/Downloads/claude-manager/claude_manager.db",
+  "projectStore": "~/Downloads/claude-vault/projects",
+  "unlinkedStore": "~/Downloads/claude-vault/unlinked",
+  "archiveDir": "~/Downloads/claude-vault/archive",
+  "dbPath": "~/Downloads/claude-vault/claude_vault.db",
   "fileTypeAllowlist": [
     "csv",
     "json",
+    "jsonl",
     "pdf",
     "png",
     "jpg",

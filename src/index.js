@@ -6,7 +6,7 @@ const chalk = require('chalk');
 const config = loadConfig();
 const db = initDb(config.dbPath);
 
-console.log(chalk.hex('#FF4B35').bold('CLAUDE MANAGER SERVICE STARTING...'));
+console.log(chalk.hex('#FF4B35').bold('CLAUDE VAULT SERVICE STARTING...'));
 console.log(`↳ WATCH DIR: ${config.watchDir}`);
 console.log(`↳ DB PATH:  ${config.dbPath}`);
 

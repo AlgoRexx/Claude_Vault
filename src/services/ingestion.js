@@ -40,16 +40,20 @@ async function ingestFile(db, config, filePath) {
   const newFileName = `${stem}_${timestamp}_${hashPrefix}${path.extname(fileName)}`;
 
   // Determine target path
-  // For v1, if no session/project is active, we move to unlinked
-  const currentSession = db.prepare("SELECT session_id, project_id FROM sessions WHERE state != 'CLOSED' ORDER BY started_at DESC LIMIT 1").get();
+  // Link to the currently FOCUSED session (TRD §11.2)
+  const currentFocus = db.prepare(`
+    SELECT s.session_id, s.project_id FROM sessions s
+    JOIN session_focus f ON s.session_id = f.session_id
+    ORDER BY f.focused_at DESC LIMIT 1
+  `).get();
   
   let targetPath;
   let sessionId = null;
   let projectId = null;
 
-  if (currentSession) {
-    sessionId = currentSession.session_id;
-    projectId = currentSession.project_id;
+  if (currentFocus) {
+    sessionId = currentFocus.session_id;
+    projectId = currentFocus.project_id;
     targetPath = path.join(config.projectStore, projectId, 'sessions', sessionId, 'files', newFileName);
   } else {
     const today = new Date().toISOString().split('T')[0];

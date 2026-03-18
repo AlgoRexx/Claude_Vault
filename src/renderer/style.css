@@ -337,5 +337,161 @@ body {
     100% { opacity: 1; }
 }
 
+/* SESSION SWITCHER (DG-060) */
+.session-switcher-row {
+    height: 36px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+    cursor: pointer;
+}
+
+.session-switcher-row:hover { background-color: var(--bg-surface); transition: background 0.08s; }
+.session-switcher-row.focused { border-left: 2px solid var(--accent); padding-left: 12px; background-color: var(--bg-surface); }
+
+.session-hash { color: var(--accent); }
+.session-alias { color: var(--text-secondary); }
+.session-separator { color: var(--text-secondary); }
+
+.session-name-stack {
+    display: flex;
+    flex-direction: column;
+}
+
+.session-alias-primary {
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: text;
+}
+
+.session-hash-secondary {
+    color: #555555;
+    font-size: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 1px;
+}
+
+.icon-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.1s;
+}
+
+.icon-btn:hover {
+    border-color: var(--accent);
+    background: rgba(255, 75, 53, 0.1);
+}
+
+.icon-btn.warn:hover {
+    border-color: var(--accent);
+    background: rgba(255, 75, 53, 0.2);
+}
+
+.icon-pixel {
+    width: 12px;
+    height: 12px;
+    background-color: var(--text-secondary);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+.icon-btn:hover .icon-pixel {
+    background-color: var(--accent);
+}
+
+/* Reopen Icon - Clean Right Arrow */
+.icon-reopen {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M9 4v3H2v2h7v3l4-4z"/></svg>');
+}
+
+/* Delete Icon - Pixel Trash */
+.icon-delete {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M4 2h8v2h2v2h-2v8H4V6H2V4h2V2zm2 2v8h4V4H6z"/></svg>');
+}
+
+/* Reveal in Finder Icon - Folder */
+.icon-reveal {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M2 2h5l2 2h5v10H2V2zm7 2l-1-1H3V3h5l1 1z"/></svg>');
+}
+
+.action-btns-compact {
+    display: flex;
+    gap: 4px;
+}
+
+.focused-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+}
+
+/* SESSION HISTORY (DG-061) */
+.history-row {
+    height: 40px;
+    padding: 0 14px;
+    display: grid;
+    grid-template-columns: 1fr 48px;
+    align-items: center;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+}
+
+.history-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.reopen-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 2px 4px;
+    cursor: pointer;
+}
+
+.reopen-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* WARNING BANNER (DG-063) */
+.warning-banner {
+    background: rgba(255, 75, 53, 0.1);
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(255, 75, 53, 0.2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--accent-70);
+    text-transform: uppercase;
+}
+
+/* INLINE RENAME (DG-058) */
+.alias-input {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 0 2px;
+    outline: none;
+    width: 100px;
+}
+
 .hidden { display: none !important; }
 sup { color: var(--accent); font-size: 70%; vertical-align: super; }

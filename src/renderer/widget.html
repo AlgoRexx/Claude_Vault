@@ -26,22 +26,33 @@
         <!-- Cleanup Banner (DG-041) -->
         <div id="cleanup-banner" class="cleanup-banner hidden">
             <div class="cleanup-text">⚠ CLEANUP: <span id="cleanup-proj">PROJECT</span> · <span id="cleanup-count">0</span> FILES</div>
-            <button class="review-btn" onclick="openVault()">REVIEW</button>
+            <button id="btn-review" class="review-btn">REVIEW</button>
         </div>
 
         <!-- Tab Bar (DG-043) -->
         <div class="tab-bar">
-            <div id="tab-session" class="tab-item active mono-small" onclick="switchTab('session')">SESSION</div>
-            <div id="tab-files" class="tab-item mono-small" onclick="switchTab('files')">FILES</div>
-            <div id="tab-suggest" class="tab-item mono-small" onclick="switchTab('suggest')">SUGGEST</div>
-            <div id="tab-log" class="tab-item mono-small" onclick="switchTab('log')">LOG</div>
-            <div id="tab-actions" class="tab-item mono-small" onclick="switchTab('actions')">ACTIONS</div>
+            <div id="tab-session" class="tab-item active mono-small">SESSION</div>
+            <div id="tab-files" class="tab-item mono-small">FILES</div>
+            <div id="tab-suggest" class="tab-item mono-small">SUGGEST</div>
+            <div id="tab-log" class="tab-item mono-small">LOG</div>
+            <div id="tab-actions" class="tab-item mono-small">ACTIONS</div>
         </div>
 
         <!-- Tab Panels -->
         <div class="panel-container">
-            <!-- SESSION Panel (DG-044) -->
+            <!-- SESSION Panel (DG-059) -->
             <div id="panel-session" class="panel active">
+                <!-- Section 1: Active Sessions -->
+                <div id="active-sessions-warning" class="warning-banner hidden">
+                    ⚠ MAX SESSIONS REACHED · 5/5
+                </div>
+                <div class="section-label" style="padding: 10px 14px 0;">Active Sessions</div>
+                <div id="active-sessions-list">
+                    <!-- Loaded via JS -->
+                </div>
+
+                <!-- Section 2: Focused Session Detail -->
+                <div class="section-label" style="padding: 10px 14px 0;">Focused Session Detail</div>
                 <div class="kv-block">
                     <div class="kv-row">
                         <span class="mono-small">SESSION ID</span>
@@ -89,13 +100,19 @@
                         <span id="db-size" class="mono-value">0.0 MB</span>
                     </div>
                 </div>
+                
+                <!-- Section 3: History -->
+                <div id="session-history-container">
+                    <div class="section-label" style="padding: 10px 14px 0;">Session History</div>
+                    <div id="session-history-list">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
             </div>
 
             <!-- FILES Panel (DG-047) -->
             <div id="panel-files" class="panel">
-                <div id="files-list">
-                    <!-- Loaded via JS -->
-                </div>
+                <div id="files-list"></div>
             </div>
 
             <!-- SUGGEST Panel (DG-048) -->
@@ -104,44 +121,40 @@
                     <div class="mono-small" style="color: var(--accent);">New Session · Suggested<sup id="suggest-count">0</sup></div>
                     <button class="action-btn-sharp" style="border-color: var(--accent); color: var(--accent);">UPLOAD SELECTED</button>
                 </div>
-                <div id="suggest-list">
-                    <!-- Loaded via JS -->
-                </div>
+                <div id="suggest-list"></div>
             </div>
 
             <!-- LOG Panel (DG-049) -->
             <div id="panel-log" class="panel">
-                <div id="log-list">
-                    <!-- Loaded via JS -->
-                </div>
+                <div id="log-list"></div>
             </div>
 
             <!-- ACTIONS Panel (DG-050) -->
             <div id="panel-actions" class="panel">
                 <div class="actions-section">
                     <div class="section-label">SET SESSION STATE</div>
-                    <button class="state-btn active" onclick="setSessionState('ACTIVE')">
+                    <button id="btn-state-active" class="state-btn">
                         <div class="state-dot" style="background-color: #9CA3AF;"></div> ACTIVE
                     </button>
-                    <button class="state-btn" onclick="setSessionState('NEAR_LIMIT')">
+                    <button id="btn-state-limit" class="state-btn">
                         <div class="state-dot" style="background-color: rgba(255, 75, 53, 0.7);"></div> NEAR LIMIT
                     </button>
-                    <button class="state-btn" onclick="setSessionState('FINAL_WINDOW')">
+                    <button id="btn-state-final" class="state-btn">
                         <div class="state-dot" style="background-color: #FF4B35;"></div> FINAL WINDOW
                     </button>
-                    <button class="state-btn" onclick="setSessionState('CLOSED')">
-                        <div class="state-dot" style="background-color: #444444;"></div> CLOSE SESSION
+                    <button id="btn-state-close" class="state-btn">
+                        <div class="state-dot" style="background-color: #444444;"></div> CLOSED
                     </button>
                 </div>
                 <div class="actions-section">
                     <div class="section-label">QUICK ACTIONS</div>
                     <div class="quick-actions-grid">
-                        <button class="action-btn-sharp" onclick="startNewSession()">NEW SESSION</button>
-                        <button class="action-btn-sharp" onclick="openVault()">OPEN VAULT</button>
-                        <button class="action-btn-sharp">SUGGEST FILES</button>
-                        <button class="action-btn-sharp">UNLINKED FILES</button>
-                        <button class="action-btn-sharp warn">RUN CLEANUP</button>
-                        <button class="action-btn-sharp">PAUSE WATCHER</button>
+                        <button id="btn-new-session" class="action-btn-sharp">NEW SESSION</button>
+                        <button id="btn-open-vault" class="action-btn-sharp">OPEN VAULT</button>
+                        <button id="btn-suggest-files" class="action-btn-sharp">SUGGEST FILES</button>
+                        <button id="btn-unlinked-files" class="action-btn-sharp">UNLINKED FILES</button>
+                        <button id="btn-run-cleanup" class="action-btn-sharp warn">RUN CLEANUP</button>
+                        <button id="btn-pause-watcher" class="action-btn-sharp">PAUSE WATCHER</button>
                     </div>
                 </div>
             </div>
@@ -149,8 +162,8 @@
 
         <!-- Status Bar (DG-051) -->
         <footer class="status-bar">
-            <div class="status-item status-watcher">
-                <div class="pulse-square"></div> WATCHING
+            <div id="status-watcher-container" class="status-item status-watcher">
+                <div id="status-pulse" class="pulse-square"></div> <span id="status-watcher-text">WATCHING</span>
             </div>
             <div class="status-item">LAST · <span id="status-last">--:--</span></div>
             <div class="status-item">DB · <span id="status-db">0.0MB</span></div>

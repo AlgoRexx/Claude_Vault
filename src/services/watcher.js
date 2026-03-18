@@ -2,10 +2,13 @@ const chokidar = require('chokidar');
 const path = require('path');
 const { ingestFile } = require('./ingestion');
 
+let watcher = null;
+let isPaused = false;
+
 function startWatcher(db, config) {
   const watchDir = config.watchDir;
   
-  const watcher = chokidar.watch(watchDir, {
+  watcher = chokidar.watch(watchDir, {
     persistent: true,
     ignoreInitial: true,
     awaitWriteFinish: {
@@ -21,6 +24,7 @@ function startWatcher(db, config) {
   });
 
   watcher.on('add', async (filePath) => {
+    if (isPaused) return; // Silent ignore if paused
     console.log(`WATCHER · ADD · ${path.basename(filePath)}`);
     try {
       const result = await ingestFile(db, config, filePath);
@@ -41,6 +45,18 @@ function startWatcher(db, config) {
   return watcher;
 }
 
+function toggleWatcher() {
+  isPaused = !isPaused;
+  console.log(`WATCHER · ${isPaused ? 'PAUSED' : 'RESUMED'}`);
+  return isPaused;
+}
+
+function getWatcherState() {
+  return isPaused ? 'PAUSED' : (watcher ? 'WATCHING' : 'IDLE');
+}
+
 module.exports = {
-  startWatcher
+  startWatcher,
+  toggleWatcher,
+  getWatcherState
 };

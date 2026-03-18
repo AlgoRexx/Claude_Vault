@@ -1,15 +1,22 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, shell } = require('electron');
 const path = require('path');
 const { loadConfig } = require('./utils/config');
 const { initDb } = require('./database/db');
-const { startWatcher } = require('./services/watcher');
+const { startWatcher, toggleWatcher, getWatcherState } = require('./services/watcher');
 const { 
   createProject, 
   listProjects, 
   startSession, 
   setSessionState, 
   getActiveSession, 
-  listSessions 
+  listSessions,
+  switchFocus,
+  getCurrentFocus,
+  listActiveSessions,
+  listSessionHistory,
+  setAlias,
+  reopenSession,
+  deleteSession
 } = require('./services/session');
 const { getSuggestions } = require('./services/suggestions');
 const { getEligibleProjects, archiveProject, deleteProjectFiles, keepProject } = require('./services/cleanup');
@@ -149,19 +156,59 @@ function updateTrayIcon() {
 function setupIpc() {
   ipcMain.handle('get-status', () => {
     const activeSession = getActiveSession(db);
+    let activeSessionFileCount = 0;
+    if (activeSession) {
+      const result = db.prepare('SELECT COUNT(*) as count FROM files WHERE linked_session_id = ?').get(activeSession.session_id);
+      activeSessionFileCount = result ? result.count : 0;
+    }
     return {
       activeSession,
+      activeSessionFileCount,
+      activeSessions: listActiveSessions(db),
+      sessionHistory: listSessionHistory(db),
       watchDir: config.watchDir,
       dbPath: config.dbPath,
-      watcherState: watcher ? 'WATCHING' : 'IDLE',
+      watcherState: getWatcherState(),
       lastEvent: null 
     };
+  });
+
+  ipcMain.handle('switch-focus', (event, sessionId) => switchFocus(db, sessionId));
+  ipcMain.handle('set-alias', (event, sessionId, alias) => setAlias(db, sessionId, alias));
+  ipcMain.handle('reopen-session', (event, sessionId) => reopenSession(db, sessionId, config.max_concurrent_sessions || 5));
+  ipcMain.handle('delete-session', (event, sessionId) => deleteSession(db, sessionId, config));
+  ipcMain.handle('start-session', (event, projectId) => startSession(db, projectId, config.max_concurrent_sessions || 5));
+  ipcMain.handle('reveal-session-folder', (event, sessionId) => {
+    const sessionInfo = db.prepare('SELECT project_id FROM sessions WHERE session_id = ?').get(sessionId);
+    if (sessionInfo && config && config.projectStore) {
+      const sessionDirPath = path.join(config.projectStore, sessionInfo.project_id, 'sessions', sessionId);
+      shell.showItemInFolder(path.resolve(sessionDirPath));
+    }
+  });
+  
+  ipcMain.handle('toggle-watcher', () => toggleWatcher());
+  ipcMain.handle('list-recent-files', (event, sessionId = null) => {
+    if (sessionId) {
+      return db.prepare(`
+        SELECT original_name, file_type, created_at, linked_session_id, project_id
+        FROM files
+        WHERE linked_session_id = ?
+        ORDER BY created_at DESC
+        LIMIT 50
+      `).all(sessionId);
+    }
+    return db.prepare(`
+      SELECT original_name, file_type, created_at, linked_session_id, project_id
+      FROM files
+      ORDER BY created_at DESC
+      LIMIT 50
+    `).all();
   });
 
   ipcMain.handle('list-projects', () => listProjects(db));
   ipcMain.handle('create-project', (event, name) => createProject(db, name));
   ipcMain.handle('list-sessions', (event, projectId) => listSessions(db, projectId));
-  ipcMain.handle('start-session', (event, projectId) => startSession(db, projectId));
+  
   ipcMain.handle('stop-session', () => {
     const active = getActiveSession(db);
     if (active) setSessionState(db, active.session_id, 'CLOSED');

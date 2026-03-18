@@ -116,7 +116,7 @@ function setAlias(db, sessionId, alias) {
 }
 
 function reopenSession(db, sessionId, maxConcurrentSessions = 5) {
-  const session = db.prepare('SELECT * FROM sessions WHERE session_id = ? AND state = "CLOSED"').get(sessionId);
+  const session = db.prepare('SELECT * FROM sessions WHERE session_id = ? AND state = \'CLOSED\'').get(sessionId);
   if (!session) throw new Error(`SESSION ERROR · SESSION NOT CLOSED · ${sessionId}`);
 
   // Check concurrent session limit
@@ -126,7 +126,7 @@ function reopenSession(db, sessionId, maxConcurrentSessions = 5) {
   }
 
   db.transaction(() => {
-    db.prepare('UPDATE sessions SET state = "ACTIVE", ended_at = NULL WHERE session_id = ?').run(sessionId);
+    db.prepare('UPDATE sessions SET state = \'ACTIVE\', ended_at = NULL WHERE session_id = ?').run(sessionId);
     
     // Set reopened session as focused
     db.prepare(`

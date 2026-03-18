@@ -22,4 +22,10 @@
   "nearLimitThreshold": 20,
   "finalWindowThreshold": 30,
   "cleanupTtlDays": 30
+  ,
+  "limitWindowsMs": {
+    "5HR": 18000000,
+    "DAILY": 86400000,
+    "WEEKLY": 604800000
+  }
 }

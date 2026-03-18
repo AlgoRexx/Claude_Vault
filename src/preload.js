@@ -36,6 +36,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProject: (projectId) => ipcRenderer.invoke('delete-project', projectId),
   keepProject: (projectId) => ipcRenderer.invoke('keep-project'),
   
+  // Accounts (ACCTS tab)
+  listAccounts: () => ipcRenderer.invoke('list-accounts'),
+  addAccount: (payload) => ipcRenderer.invoke('add-account', payload),
+  logAccountHit: (accountId, limitType) => ipcRenderer.invoke('log-account-hit', accountId, limitType),
+  undoAccountHit: (accountId, limitType) => ipcRenderer.invoke('undo-account-hit', accountId, limitType),
+  switchAccount: (accountId) => ipcRenderer.invoke('switch-account', accountId),
+
   // Logs and Events (could add more)
   onWatcherUpdate: (callback) => ipcRenderer.on('watcher-update', (event, data) => callback(data))
 });

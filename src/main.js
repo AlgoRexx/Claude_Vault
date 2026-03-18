@@ -21,6 +21,13 @@ const {
 const { getSuggestions } = require('./services/suggestions');
 const { getEligibleProjects, archiveProject, deleteProjectFiles, keepProject } = require('./services/cleanup');
 const { generateTrayIcon } = require('./utils/icon_gen');
+const {
+  addAccount,
+  logAccountHit,
+  undoAccountHit,
+  switchAccountFocus,
+  listAccountsWithLimitStatus
+} = require('./services/accounts');
 
 let mainWindow;
 let popoverWindow;
@@ -228,6 +235,13 @@ function setupIpc() {
     return deleteProjectFiles(db, projectId, projectDir);
   });
   ipcMain.handle('keep-project', (event, projectId) => keepProject(db, projectId));
+
+  // Accounts (ACCTS tab)
+  ipcMain.handle('list-accounts', () => listAccountsWithLimitStatus(db, config));
+  ipcMain.handle('add-account', (event, payload) => addAccount(db, payload));
+  ipcMain.handle('log-account-hit', (event, accountId, limitType) => logAccountHit(db, config, accountId, limitType));
+  ipcMain.handle('undo-account-hit', (event, accountId, limitType) => undoAccountHit(db, accountId, limitType));
+  ipcMain.handle('switch-account', (event, accountId) => switchAccountFocus(db, accountId));
 }
 
 app.whenReady().then(() => {

@@ -76,6 +76,35 @@ function initDb(dbPath) {
       triggered_at INTEGER NOT NULL,
       resolved_at  INTEGER
     );
+
+    -- Account tracking (ACCTS tab)
+    CREATE TABLE IF NOT EXISTS accounts (
+      account_id TEXT PRIMARY KEY,
+      alias TEXT NOT NULL UNIQUE,
+      email TEXT,
+      plan TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS account_focus (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id TEXT NOT NULL,
+      focused_at INTEGER NOT NULL,
+      FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS account_limit_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id TEXT NOT NULL,
+      limit_type TEXT NOT NULL,  -- 5HR | DAILY | WEEKLY
+      hit_at INTEGER NOT NULL,
+      reset_at INTEGER NOT NULL,
+      FOREIGN KEY (account_id) REFERENCES accounts(account_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_ale_account_limit_reset
+      ON account_limit_events(account_id, limit_type, reset_at);
   `);
 
   return db;

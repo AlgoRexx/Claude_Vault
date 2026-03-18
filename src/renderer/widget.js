@@ -24,7 +24,7 @@ function switchTab(tabId) {
         if (tabId === 'session') loadSessions();
         if (tabId === 'files') loadFiles();
         if (tabId === 'suggest') loadSuggestions();
-        if (tabId === 'log') loadLogs();
+        if (tabId === 'accts') loadAccounts();
     } catch (err) {
         console.error(`[POPOVER] Load Tab Error: ${err.message}`);
     }
@@ -394,9 +394,220 @@ async function loadSuggestions() {
     } catch (err) { console.error(err); }
 }
 
-async function loadLogs() {
-    const container = document.getElementById('log-list');
-    container.innerHTML = '<div class="log-row"><span class="mono-small">14:23</span><span class="mono-small">IDLE</span></div>';
+function formatRemainingMs(ms) {
+    const seconds = Math.max(0, Math.floor(ms / 1000));
+    const hh = Math.floor(seconds / 3600);
+    const mm = Math.floor((seconds % 3600) / 60);
+    const ss = seconds % 60;
+
+    const pad2 = (n) => String(n).padStart(2, '0');
+    if (hh > 0) return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+    return `${pad2(mm)}:${pad2(ss)}`;
+}
+
+let accountTickTimer = null;
+
+function tickAccountCountdowns() {
+    const now = Date.now();
+    const resetNodes = document.querySelectorAll('[data-acct-reset-at]');
+    resetNodes.forEach(node => {
+        const resetAt = Number(node.dataset.acctResetAt);
+        if (!Number.isFinite(resetAt)) return;
+
+        const remaining = resetAt - now;
+        const statusEl = node.querySelector('.acct-status');
+        const dotEl = node.querySelector('.limit-dot');
+        const countdownEl = node.querySelector('.acct-countdown');
+        const limitRow = node.closest('.acct-limit-row');
+        const undoBtn = limitRow ? limitRow.querySelector('.acct-undo-hit') : null;
+
+        if (remaining > 0) {
+            if (statusEl) statusEl.textContent = 'HIT';
+            if (countdownEl) countdownEl.textContent = formatRemainingMs(remaining);
+            if (dotEl) {
+                dotEl.classList.add('hit');
+                dotEl.classList.remove('ok');
+            }
+            if (undoBtn) undoBtn.style.display = '';
+        } else {
+            if (statusEl) statusEl.textContent = 'OK';
+            if (countdownEl) countdownEl.textContent = '--:--';
+            if (dotEl) {
+                dotEl.classList.remove('hit');
+                dotEl.classList.add('ok');
+            }
+            if (undoBtn) undoBtn.style.display = 'none';
+        }
+    });
+}
+
+async function loadAccounts() {
+    const container = document.getElementById('accounts-list');
+    if (!container) return;
+
+    try {
+        const errEl = document.getElementById('accounts-form-error');
+        if (errEl) errEl.classList.add('hidden');
+        container.innerHTML = '';
+        const accounts = await window.electronAPI.listAccounts();
+        if (!accounts || accounts.length === 0) {
+            container.innerHTML = '<div class="mono-small" style="padding:10px 14px;color:var(--text-secondary);">NO ACCOUNTS</div>';
+            return;
+        }
+
+        renderAccounts(accounts);
+
+        if (!accountTickTimer) {
+            accountTickTimer = setInterval(() => tickAccountCountdowns(), 1000);
+        }
+    } catch (err) {
+        console.error(`[POPOVER] Accounts Load Error: ${err.message}`);
+        container.innerHTML = '<div class="mono-small" style="padding:10px 14px;color:var(--accent);">ACCOUNTS ERROR</div>';
+    }
+}
+
+function renderAccounts(accounts) {
+    const container = document.getElementById('accounts-list');
+    container.innerHTML = '';
+
+    const focusId = accounts.find(a => a.isFocused)?.account_id || null;
+
+    accounts.forEach(a => {
+        const row = document.createElement('div');
+        row.className = `acct-row ${a.isFocused ? 'focused' : ''}`;
+        row.dataset.accountId = a.account_id;
+
+        const dot5 = a.limits['5HR']?.isHit ? 'hit' : 'ok';
+        const dotD = a.limits['DAILY']?.isHit ? 'hit' : 'ok';
+        const dotW = a.limits['WEEKLY']?.isHit ? 'hit' : 'ok';
+
+        row.innerHTML = `
+            <div class="acct-left">
+                <div class="acct-alias">${(a.alias || '').toUpperCase()}</div>
+                <div class="acct-plan">${(a.plan || '').toUpperCase()}</div>
+            </div>
+            <div class="acct-right">
+                ${a.isFocused ? '<div class="acct-active-badge">ACTIVE</div>' : '<div class="acct-active-badge hidden">ACTIVE</div>'}
+                <div class="acct-dots">
+                    <div class="limit-dot ${dot5}"></div>
+                    <div class="limit-dot ${dotD}"></div>
+                    <div class="limit-dot ${dotW}"></div>
+                </div>
+            </div>
+        `;
+
+        const details = document.createElement('div');
+        details.className = 'acct-details hidden';
+        details.id = `acct-details-${a.account_id}`;
+
+        const mkLimitRow = (limitType) => {
+            const info = a.limits[limitType];
+            if (!info || !info.hasEvent) {
+                return `
+                    <div class="acct-limit-row">
+                        <div class="acct-limit-left">
+                            <span class="acct-limit-type">${limitType}</span>
+                        </div>
+                        <div class="acct-limit-right">
+                            <span class="acct-status">NOT LOGGED</span>
+                            <button class="action-btn-sharp acct-log-hit" data-limit-type="${limitType}">LOG HIT</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const resetAt = info.resetAt || 0;
+            const remaining = resetAt - Date.now();
+            const isHit = remaining > 0;
+            return `
+                <div class="acct-limit-row">
+                    <div class="acct-limit-left">
+                        <span class="acct-limit-type">${limitType}</span>
+                    </div>
+                    <div class="acct-limit-right">
+                        <div class="acct-limit-status-wrap" data-acct-reset-at="${resetAt}">
+                            <div class="limit-dot ${isHit ? 'hit' : 'ok'}"></div>
+                            <span class="acct-status">${isHit ? 'HIT' : 'OK'}</span>
+                            <span class="acct-countdown">${isHit ? formatRemainingMs(remaining) : '--:--'}</span>
+                        </div>
+                        ${isHit ? `
+                            <button class="icon-btn acct-undo-hit" data-limit-type="${limitType}" title="Undo last hit">
+                                <div class="icon-pixel icon-undo-x"></div>
+                            </button>
+                        ` : ''}
+                        <button class="action-btn-sharp acct-log-hit" data-limit-type="${limitType}">LOG HIT</button>
+                    </div>
+                </div>
+            `;
+        };
+
+        details.innerHTML = `
+            <div class="acct-details-inner">
+                ${mkLimitRow('5HR')}
+                ${mkLimitRow('DAILY')}
+                ${mkLimitRow('WEEKLY')}
+            </div>
+        `;
+
+        // Safety: ensure undo X only exists for rows that are currently HIT.
+        // (Prevents "X" showing on NOT LOGGED/OK due to state inconsistencies.)
+        details.querySelectorAll('.acct-undo-hit').forEach(btn => {
+            const limitRow = btn.closest('.acct-limit-row');
+            const statusEl = limitRow?.querySelector('.acct-status');
+            if (!statusEl || statusEl.textContent !== 'HIT') {
+                btn.remove();
+            }
+        });
+
+        // Expand / focus
+        row.onclick = () => {
+            const isOpen = !details.classList.contains('hidden');
+            details.classList.toggle('hidden', isOpen);
+            if (!isOpen) {
+                // Mark focus locally for immediate UI feedback
+                container.querySelectorAll('.acct-row').forEach(r => {
+                    r.classList.remove('focused');
+                    const badge = r.querySelector('.acct-active-badge');
+                    if (badge) badge.classList.add('hidden');
+                });
+                row.classList.add('focused');
+                const badge = row.querySelector('.acct-active-badge');
+                if (badge) badge.classList.remove('hidden');
+            }
+            window.electronAPI.switchAccount(a.account_id).catch(() => {});
+        };
+
+        // Log-hit buttons
+        details.querySelectorAll('.acct-log-hit').forEach(btn => {
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const limitType = btn.dataset.limitType;
+                try {
+                    await window.electronAPI.logAccountHit(a.account_id, limitType);
+                    await loadAccounts();
+                } catch (err) {
+                    console.error(`[POPOVER] Log Hit Error: ${err.message}`);
+                }
+            };
+        });
+
+        // Undo last hit buttons
+        details.querySelectorAll('.acct-undo-hit').forEach(btn => {
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const limitType = btn.dataset.limitType;
+                try {
+                    await window.electronAPI.undoAccountHit(a.account_id, limitType);
+                    await loadAccounts();
+                } catch (err) {
+                    console.error(`[POPOVER] Undo Hit Error: ${err.message}`);
+                }
+            };
+        });
+
+        container.appendChild(row);
+        container.appendChild(details);
+    });
 }
 
 /**
@@ -430,6 +641,28 @@ function init() {
     bind('btn-unlinked-files', 'unlinked-files');
     bind('btn-run-cleanup', 'run-cleanup');
     bind('btn-pause-watcher', 'pause-watcher');
+
+    // Accounts form
+    const addBtn = document.getElementById('btn-add-account');
+    if (addBtn) {
+        addBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const alias = document.getElementById('acct-alias')?.value || '';
+            const email = document.getElementById('acct-email')?.value || '';
+            const plan = document.getElementById('acct-plan')?.value || 'FREE';
+            try {
+                await window.electronAPI.addAccount({ alias, email, plan });
+                await loadAccounts();
+            } catch (err) {
+                console.error(`[POPOVER] Add Account Error: ${err.message}`);
+                const errEl = document.getElementById('accounts-form-error');
+                if (errEl) {
+                    errEl.textContent = err.message;
+                    errEl.classList.remove('hidden');
+                }
+            }
+        });
+    }
 
     updateStatus();
     setInterval(updateStatus, 3000);

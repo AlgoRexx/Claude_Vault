@@ -64,7 +64,7 @@ function getSuggestions(db, projectId) {
   const candidates = db.prepare(query).all(projectId, projectId);
 
   // Context: files from the last session of this project
-  const lastSession = db.prepare('SELECT session_id FROM sessions WHERE project_id = ? AND state = "CLOSED" ORDER BY ended_at DESC LIMIT 1').get(projectId);
+  const lastSession = db.prepare('SELECT session_id FROM sessions WHERE project_id = ? AND state = \'CLOSED\' ORDER BY ended_at DESC LIMIT 1').get(projectId);
   
   let recentFileNames = '';
   let totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions WHERE project_id = ?').get(projectId).count;

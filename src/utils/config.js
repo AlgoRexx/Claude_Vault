@@ -34,10 +34,24 @@ function loadConfig() {
   config.dbPath = resolveHome(config.dbPath);
 
   // Validate
-  const requiredKeys = ['watchDir', 'projectStore', 'unlinkedStore', 'archiveDir', 'dbPath'];
+  const requiredKeys = ['watchDir', 'projectStore', 'unlinkedStore', 'archiveDir', 'dbPath', 'limitWindowsMs'];
   for (const key of requiredKeys) {
     if (!config[key]) {
       console.error(`CONFIG ERROR · ${key.toUpperCase()} · MISSING`);
+      process.exit(1);
+    }
+  }
+
+  // Validate account limit windows shape
+  const requiredLimitTypes = ['5HR', 'DAILY', 'WEEKLY'];
+  if (typeof config.limitWindowsMs !== 'object' || Array.isArray(config.limitWindowsMs)) {
+    console.error('CONFIG ERROR · LIMITWINDOWSMS · MUST_BE_OBJECT');
+    process.exit(1);
+  }
+  for (const lt of requiredLimitTypes) {
+    const v = config.limitWindowsMs[lt];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) {
+      console.error(`CONFIG ERROR · LIMITWINDOWSMS.${lt} · INVALID`);
       process.exit(1);
     }
   }

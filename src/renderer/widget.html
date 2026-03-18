@@ -34,7 +34,7 @@
             <div id="tab-session" class="tab-item active mono-small">SESSION</div>
             <div id="tab-files" class="tab-item mono-small">FILES</div>
             <div id="tab-suggest" class="tab-item mono-small">SUGGEST</div>
-            <div id="tab-log" class="tab-item mono-small">LOG</div>
+            <div id="tab-accts" class="tab-item mono-small">ACCTS</div>
             <div id="tab-actions" class="tab-item mono-small">ACTIONS</div>
         </div>
 
@@ -124,9 +124,25 @@
                 <div id="suggest-list"></div>
             </div>
 
-            <!-- LOG Panel (DG-049) -->
-            <div id="panel-log" class="panel">
-                <div id="log-list"></div>
+            <!-- ACCTS Panel (account limit tracking) -->
+            <div id="panel-accts" class="panel">
+                <div class="section-label" style="padding: 10px 14px 0;">Account Limit Tracking</div>
+
+                <div class="acct-form">
+                    <input id="acct-alias" class="acct-input" placeholder="ALIAS (required)"/>
+                    <input id="acct-email" class="acct-input" placeholder="EMAIL (optional)"/>
+                    <select id="acct-plan" class="acct-select">
+                        <option value="FREE">FREE</option>
+                        <option value="PRO">PRO</option>
+                        <option value="MAX">MAX</option>
+                        <option value="TEAM">TEAM</option>
+                    </select>
+                    <button id="btn-add-account" class="action-btn-sharp">ADD ACCOUNT</button>
+                </div>
+
+                <div id="accounts-form-error" class="mono-small hidden" style="padding: 0 14px 10px; color: var(--accent);"></div>
+
+                <div id="accounts-list"></div>
             </div>
 
             <!-- ACTIONS Panel (DG-050) -->

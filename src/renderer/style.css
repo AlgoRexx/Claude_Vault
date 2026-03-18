@@ -246,6 +246,144 @@ body {
     border-bottom: 1px solid rgba(51, 51, 51, 0.4);
 }
 
+/* ACCTS TAB (account limit tracking) */
+.acct-form {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.acct-input, .acct-select {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 6px 8px;
+    outline: none;
+    width: 100%;
+}
+
+.acct-input:focus, .acct-select:focus {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.acct-select {
+    appearance: none;
+}
+
+.accounts-list {
+    padding-bottom: 10px;
+}
+
+.acct-row {
+    height: 36px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+    cursor: pointer;
+}
+
+.acct-row:hover { background-color: var(--bg-surface); transition: background 0.08s; }
+.acct-row.focused { border-left: 2px solid var(--accent); padding-left: 12px; background-color: var(--bg-surface); }
+
+.acct-left { display: flex; flex-direction: column; gap: 2px; }
+.acct-alias { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.acct-plan { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+
+.acct-right { display: flex; align-items: center; gap: 10px; }
+.acct-active-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.acct-dots { display: flex; align-items: center; gap: 6px; }
+.limit-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-muted);
+    opacity: 0.6;
+    border-radius: 0;
+}
+.limit-dot.hit {
+    background-color: var(--accent);
+    opacity: 1;
+    animation: acct-pulse 1.2s ease-in-out infinite;
+}
+.limit-dot.ok {
+    background-color: var(--text-muted);
+    opacity: 0.55;
+}
+
+@keyframes acct-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.acct-details {
+    padding: 6px 14px 10px;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+}
+
+.acct-details-inner { display: flex; flex-direction: column; gap: 6px; }
+
+.acct-limit-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 2px;
+}
+
+.acct-limit-left { display: flex; align-items: center; }
+
+.acct-limit-type {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+
+.acct-limit-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.acct-limit-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.acct-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.acct-countdown {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-secondary);
+}
+
+.acct-log-hit {
+    padding: 4px 8px !important;
+    font-size: 8px !important;
+}
+
+
 /* ACTIONS TAB (DG-050) */
 .actions-section {
     padding: 12px 14px;
@@ -428,6 +566,11 @@ body {
 /* Reveal in Finder Icon - Folder */
 .icon-reveal {
     -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M2 2h5l2 2h5v10H2V2zm7 2l-1-1H3V3h5l1 1z"/></svg>');
+}
+
+.icon-undo-x {
+    -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M3.5 3.5L12.5 12.5l-1 1L2.5 4.5l1-1zM12.5 3.5l1 1-9 9-1-1 9-9z"/></svg>');
+    mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path fill="black" d="M3.5 3.5L12.5 12.5l-1 1L2.5 4.5l1-1zM12.5 3.5l1 1-9 9-1-1 9-9z"/></svg>');
 }
 
 .action-btns-compact {

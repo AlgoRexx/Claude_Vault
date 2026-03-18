@@ -1,0 +1,15 @@
+{
+  "watchDir": "~/Downloads",
+  "projectStore": "~/Downloads/claude-manager/projects",
+  "unlinkedStore": "~/Downloads/claude-manager/unlinked",
+  "archiveDir": "~/Downloads/claude-manager/archive",
+  "dbPath": "~/Downloads/claude-manager/claude_manager.db",
+  "fileTypeAllowlist": [
+    "csv", "json", "pdf", "png", "jpg", "txt", "py", "js", "ts", "md"
+  ],
+  "stabilizationThresholdMs": 2000,
+  "pollIntervalMs": 500,
+  "nearLimitThreshold": 20,
+  "finalWindowThreshold": 30,
+  "cleanupTtlDays": 30
+}

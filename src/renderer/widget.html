@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaudeVault Popover</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=IBM+Plex+Mono:wght@400&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="popover-container">
+        <!-- Header (DG-040) -->
+        <header class="popover-header">
+            <div class="header-left">
+                <div class="pixel-mark-small"></div>
+                <h1 class="header-title">CLAUDEVAULT</h1>
+            </div>
+            <div class="state-indicator">
+                <div id="header-state-dot" class="state-dot"></div>
+                <div id="header-state-label" class="mono-small" style="font-size: 8px;">IDLE</div>
+            </div>
+        </header>
+
+        <!-- Cleanup Banner (DG-041) -->
+        <div id="cleanup-banner" class="cleanup-banner hidden">
+            <div class="cleanup-text">⚠ CLEANUP: <span id="cleanup-proj">PROJECT</span> · <span id="cleanup-count">0</span> FILES</div>
+            <button class="review-btn" onclick="openVault()">REVIEW</button>
+        </div>
+
+        <!-- Tab Bar (DG-043) -->
+        <div class="tab-bar">
+            <div id="tab-session" class="tab-item active mono-small" onclick="switchTab('session')">SESSION</div>
+            <div id="tab-files" class="tab-item mono-small" onclick="switchTab('files')">FILES</div>
+            <div id="tab-suggest" class="tab-item mono-small" onclick="switchTab('suggest')">SUGGEST</div>
+            <div id="tab-log" class="tab-item mono-small" onclick="switchTab('log')">LOG</div>
+            <div id="tab-actions" class="tab-item mono-small" onclick="switchTab('actions')">ACTIONS</div>
+        </div>
+
+        <!-- Tab Panels -->
+        <div class="panel-container">
+            <!-- SESSION Panel (DG-044) -->
+            <div id="panel-session" class="panel active">
+                <div class="kv-block">
+                    <div class="kv-row">
+                        <span class="mono-small">SESSION ID</span>
+                        <span id="sess-id" class="mono-value" style="color: var(--accent);">NONE</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">PROJECT</span>
+                        <span id="sess-proj" class="mono-value">NONE</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">STARTED</span>
+                        <span id="sess-start" class="mono-value">--:--</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">STATE</span>
+                        <span id="sess-state" class="mono-value">IDLE</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">FILES LINKED</span>
+                        <span id="sess-files" class="mono-value">0</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">MESSAGES</span>
+                        <span id="sess-msg" class="mono-value">0 / 30</span>
+                    </div>
+                    <div class="progress-container">
+                        <div id="sess-progress" class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="kv-block">
+                    <div class="kv-row">
+                        <span class="mono-small">WATCHER</span>
+                        <span id="watch-state" class="mono-value" style="color: #4ADE80;">ACTIVE</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">WATCH DIR</span>
+                        <span id="watch-dir" class="mono-value" style="font-size: 8px;">/Downloads</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">LAST DETECT</span>
+                        <span id="watch-last" class="mono-value">--:--</span>
+                    </div>
+                    <div class="kv-row">
+                        <span class="mono-small">DB SIZE</span>
+                        <span id="db-size" class="mono-value">0.0 MB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FILES Panel (DG-047) -->
+            <div id="panel-files" class="panel">
+                <div id="files-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <!-- SUGGEST Panel (DG-048) -->
+            <div id="panel-suggest" class="panel">
+                <div class="suggest-header">
+                    <div class="mono-small" style="color: var(--accent);">New Session · Suggested<sup id="suggest-count">0</sup></div>
+                    <button class="action-btn-sharp" style="border-color: var(--accent); color: var(--accent);">UPLOAD SELECTED</button>
+                </div>
+                <div id="suggest-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <!-- LOG Panel (DG-049) -->
+            <div id="panel-log" class="panel">
+                <div id="log-list">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <!-- ACTIONS Panel (DG-050) -->
+            <div id="panel-actions" class="panel">
+                <div class="actions-section">
+                    <div class="section-label">SET SESSION STATE</div>
+                    <button class="state-btn active" onclick="setSessionState('ACTIVE')">
+                        <div class="state-dot" style="background-color: #9CA3AF;"></div> ACTIVE
+                    </button>
+                    <button class="state-btn" onclick="setSessionState('NEAR_LIMIT')">
+                        <div class="state-dot" style="background-color: rgba(255, 75, 53, 0.7);"></div> NEAR LIMIT
+                    </button>
+                    <button class="state-btn" onclick="setSessionState('FINAL_WINDOW')">
+                        <div class="state-dot" style="background-color: #FF4B35;"></div> FINAL WINDOW
+                    </button>
+                    <button class="state-btn" onclick="setSessionState('CLOSED')">
+                        <div class="state-dot" style="background-color: #444444;"></div> CLOSE SESSION
+                    </button>
+                </div>
+                <div class="actions-section">
+                    <div class="section-label">QUICK ACTIONS</div>
+                    <div class="quick-actions-grid">
+                        <button class="action-btn-sharp" onclick="startNewSession()">NEW SESSION</button>
+                        <button class="action-btn-sharp" onclick="openVault()">OPEN VAULT</button>
+                        <button class="action-btn-sharp">SUGGEST FILES</button>
+                        <button class="action-btn-sharp">UNLINKED FILES</button>
+                        <button class="action-btn-sharp warn">RUN CLEANUP</button>
+                        <button class="action-btn-sharp">PAUSE WATCHER</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar (DG-051) -->
+        <footer class="status-bar">
+            <div class="status-item status-watcher">
+                <div class="pulse-square"></div> WATCHING
+            </div>
+            <div class="status-item">LAST · <span id="status-last">--:--</span></div>
+            <div class="status-item">DB · <span id="status-db">0.0MB</span></div>
+        </footer>
+    </div>
+
+    <script src="widget.js"></script>
+</body>
+</html>

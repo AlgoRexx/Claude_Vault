@@ -1,4 +1,4 @@
-# PRD — Claude Manager: File Pipeline & Session Continuity System
+# PRD — ClaudeVault: File Pipeline & Session Continuity System
 
 **Version:** 0.1.0  
 **Status:** Draft  

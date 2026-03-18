@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaudeVault Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@900&family=DM+Sans:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="window-container">
+        <!-- Region 1: Top Bar -->
+        <header id="top-bar">
+            <div class="logo-section">
+                <div class="brand-mark"></div>
+                <h1 class="level-1 app-title">CLAUDEVAULT</h1>
+            </div>
+            
+            <div class="session-display">
+                <div class="active-session-label level-4">ACTIVE SESSION</div>
+                <div id="session-badge" class="state-badge level-4 pulse-border">IDLE</div>
+            </div>
+
+            <div class="window-controls">
+                <div class="control minimize" onclick="windowAction('minimize')"></div>
+                <div class="control maximize" onclick="windowAction('maximize')"></div>
+                <div class="control close" onclick="windowAction('close')"></div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Region 2: Left Panel (Navigator) -->
+            <nav id="navigator">
+                <div class="nav-section">
+                    <div class="nav-header level-2">PROJECTS<sup id="project-count">0</sup></div>
+                    <div id="project-list" class="nav-items-container">
+                        <!-- Projects loaded via JS -->
+                    </div>
+                    <div class="add-project-btn level-4" onclick="createNewProject()">+ CREATE NEW</div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-header level-2">SESSIONS<sup id="session-count">0</sup></div>
+                    <div id="session-list" class="nav-items-container">
+                        <!-- Sessions loaded via JS -->
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Region 3: Main Panel -->
+            <main id="main-panel">
+                <div class="main-view-header">
+                    <h2 id="view-title" class="level-2">SELECT A PROJECT</h2>
+                    <div id="view-actions" class="view-actions">
+                        <!-- Project actions (Start Session, etc.) -->
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="level-4">FILE NAME</div>
+                        <div class="level-4">TYPE</div>
+                        <div class="level-4">STABILIZED</div>
+                    </div>
+                    <div id="file-list" class="file-rows-container">
+                        <!-- Files loaded via JS -->
+                        <div class="empty-state level-4">NO FILES RECORDED</div>
+                    </div>
+                </div>
+
+                <!-- Suggestion Drawer (Inline) -->
+                <div id="suggestion-drawer" class="drawer">
+                    <div class="drawer-header level-2">FILE SUGGESTIONS</div>
+                    <div id="suggestion-list" class="suggestion-items-container">
+                        <!-- Suggestions loaded via JS -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Region 4: Bottom Bar -->
+        <footer id="bottom-bar">
+            <div class="watcher-status level-4">
+                WATCHER · <span id="watcher-state">ACTIVE</span> · <span id="watcher-dir">./DOWNLOADS</span>
+            </div>
+            <div class="db-status level-4">
+                DB · <span id="db-path">~/claude-manager/claude_manager.db</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals (Simple implementation for DG-022) -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <!-- Modal content injected here -->
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

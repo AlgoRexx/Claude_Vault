@@ -1,4 +1,4 @@
-# TRD — Claude Manager: File Pipeline & Session Continuity System
+# TRD — ClaudeVault: File Pipeline & Session Continuity System
 
 **Version:** 0.1.0  
 **Status:** Draft  
@@ -9,7 +9,7 @@
 
 ## 1. System Overview
 
-Claude Manager is a **local, event-driven file pipeline** that runs as a background service on macOS. It watches a target directory (typically `~/Downloads`), ingests stabilized files, hashes and moves them into a structured project store, links them to Claude sessions, and surfaces them as suggestions when a new session begins.
+ClaudeVault is a **local, event-driven file pipeline** that runs as a background service on macOS. It watches a target directory (typically `~/Downloads`), ingests stabilized files, hashes and moves them into a structured project store, links them to Claude sessions, and surfaces them as suggestions when a new session begins.
 
 It does not interact with Claude's API. It does not modify the Claude web interface. It is a local utility.
 
@@ -19,7 +19,7 @@ It does not interact with Claude's API. It does not modify the Claude web interf
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                      Claude Manager                    │
+│                      ClaudeVault                    │
 │                                                        │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────┐ │
 │  │  FileWatcher │───▶│  Ingestion   │───▶│    DB    │ │
@@ -141,7 +141,7 @@ if (existing) {
 **Target path structure:**
 
 ```
-~/Downloads/claude-manager/
+~/Downloads/claudevault/
   projects/
     {project_id}/
       sessions/
@@ -234,7 +234,7 @@ Read the Claude web UI's message count or a UI indicator if one exists.
 The user explicitly triggers `NEAR_LIMIT` state via a hotkey, tray menu action, or CLI command.
 
 ```bash
-claude-manager session set-state NEAR_LIMIT
+claudevault session set-state NEAR_LIMIT
 ```
 
 **Problems:**

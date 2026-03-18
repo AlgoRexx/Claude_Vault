@@ -1,0 +1,341 @@
+:root {
+    --bg-primary: #1C1C1C;
+    --bg-surface: #252525;
+    --bg-elevated: #2E2E2E;
+    --bg-popover: #111111; /* DG-039 */
+    --accent: #FF4B35;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9CA3AF;
+    --text-muted: #555555;
+    --text-value: #F0EDE8;
+    --border: #333333;
+    --row-height: 32px;
+    --accent-70: rgba(255, 75, 53, 0.7);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    cursor: default;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+}
+
+/* TYPOGRAPHY LEVELS (DG-014, DG-040, DG-044) */
+.level-1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; font-size: 72px; letter-spacing: -0.02em; }
+.level-2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; font-size: 24px; letter-spacing: -0.01em; }
+.level-3 { font-family: 'DM Sans', sans-serif; font-weight: 400; font-size: 13px; }
+.level-4 { font-family: 'JetBrains Mono', monospace; font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
+
+/* IBM Plex Mono for system data (DG-013, DG-043, DG-044) */
+.mono-small { font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace; font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; }
+.mono-value { font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-value); }
+
+/* POPOVER LAYOUT (DG-038) */
+.popover-container {
+    width: 320px;
+    height: 100vh;
+    background-color: var(--bg-popover);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+/* POPOVER HEADER (DG-040) */
+.popover-header {
+    height: auto;
+    padding: 10px 14px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-popover);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pixel-mark-small {
+    width: 23px;
+    height: 23px;
+    background-image: url('../../assets/tray_icon_pixel.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+}
+
+.state-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.state-dot {
+    width: 5px;
+    height: 5px;
+    background-color: var(--text-muted);
+}
+
+/* CLEANUP BANNER (DG-041) */
+.cleanup-banner {
+    background: rgba(255, 75, 53, 0.07);
+    border-bottom: 1px solid rgba(255, 75, 53, 0.2);
+    padding: 8px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cleanup-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+}
+
+.review-btn {
+    border-radius: 6px; /* DG-042 Exception */
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+/* TAB BAR (DG-043) */
+.tab-bar {
+    display: flex;
+    background-color: var(--bg-popover);
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-item {
+    flex: 1;
+    padding: 6px 0;
+    text-align: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.tab-item:hover { color: var(--text-secondary); }
+.tab-item.active { 
+    color: var(--accent); 
+    border-bottom: 2px solid var(--accent); 
+}
+
+/* PANELS */
+.panel-container {
+    flex: 1;
+    overflow-y: auto;
+    background-color: var(--bg-popover);
+}
+
+.panel {
+    display: none;
+}
+.panel.active { display: block; }
+
+/* SESSION TAB (DG-044, DG-045) */
+.kv-block {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.kv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.progress-container {
+    height: 3px;
+    width: 100%;
+    background-color: var(--border);
+    margin-top: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--accent-70);
+}
+
+/* FILES TAB (DG-047) */
+.file-row {
+    display: grid;
+    grid-template-columns: 1fr 52px;
+    height: 32px;
+    padding: 0 14px;
+    align-items: center;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+}
+
+.file-row:hover { background-color: var(--bg-surface); transition: background 0.08s; }
+.file-row.latest { border-left: 2px solid var(--accent); padding-left: 12px; }
+
+.file-name-cell {
+    direction: rtl;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-value);
+}
+.file-name-cell span { direction: ltr; display: inline-block; }
+
+.file-meta-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/* SUGGEST TAB (DG-048) */
+.suggest-header {
+    background: var(--bg-popover);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggest-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+}
+
+.suggest-row:hover { background-color: var(--bg-surface); }
+
+/* LOG TAB (DG-049) */
+.log-row {
+    display: grid;
+    grid-template-columns: 60px 72px 1fr;
+    padding: 5px 14px;
+    border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+}
+
+/* ACTIONS TAB (DG-050) */
+.actions-section {
+    padding: 12px 14px;
+}
+
+.section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.state-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+
+.state-btn:hover { background-color: var(--bg-surface); }
+.state-btn.active { 
+    border-color: rgba(255, 75, 53, 0.5); 
+    color: var(--accent-70);
+    background-color: var(--bg-surface);
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.action-btn-sharp {
+    padding: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.action-btn-sharp:hover { border-color: var(--accent); color: var(--text-primary); }
+.action-btn-sharp.warn { border-color: rgba(255, 75, 53, 0.3); color: var(--accent-70); }
+
+/* BOTTOM STATUS BAR (DG-051) */
+.status-bar {
+    background-color: var(--bg-popover);
+    border-top: 1px solid var(--border);
+    padding: 5px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: var(--text-muted);
+}
+
+.status-watcher {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+}
+
+.pulse-square {
+    width: 4px;
+    height: 4px;
+    background-color: var(--accent);
+    animation: pulse-small 1.2s infinite;
+}
+
+@keyframes pulse-small {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+.hidden { display: none !important; }
+sup { color: var(--accent); font-size: 70%; vertical-align: super; }

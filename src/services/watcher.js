@@ -28,7 +28,8 @@ function startWatcher(db, config) {
     console.log(`WATCHER · ADD · ${path.basename(filePath)}`);
     try {
       const result = await ingestFile(db, config, filePath);
-      console.log(`WATCHER · ${result.status} · ${path.basename(filePath)} · ${result.fileId || ''}`);
+      const reason = result.reason ? ` · ${result.reason}` : '';
+      console.log(`WATCHER · ${result.status} · ${path.basename(filePath)}${reason}`);
       if (global.mainWindow) {
         global.mainWindow.webContents.send('watcher-update', { type: 'ADD', result, filePath });
       }

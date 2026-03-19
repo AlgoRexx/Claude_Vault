@@ -2,6 +2,7 @@
 let currentStatus = null;
 let currentTab = 'session';
 let editingAliasForSessionId = null;
+let selectedFileIds = new Set();
 
 /**
  * Tab Switching (DG-043)
@@ -22,10 +23,12 @@ function switchTab(tabId) {
 
     try {
         if (tabId === 'session') loadSessions();
-        if (tabId === 'files') loadFiles();
-        if (tabId === 'suggest') loadSuggestions();
+        if (tabId === 'files') {
+            loadFilesTab();
+        }
         if (tabId === 'accts') loadAccounts();
         if (tabId === 'handoff') loadHandoff();
+        if (tabId === 'chats') loadChats();
     } catch (err) {
         console.error(`[POPOVER] Load Tab Error: ${err.message}`);
     }
@@ -46,12 +49,17 @@ async function updateStatus() {
         const headerStateDot = document.getElementById('header-state-dot');
         
         if (activeSession) {
-            // New layout: Alias primary (orange), Hash small below
+            // Updated: Header title becomes the active session name (alias or project)
             const hash = activeSession.session_id.slice(0, 8);
-            const alias = activeSession.alias || hash;
+            const alias = activeSession.alias || activeSession.project_name || hash;
+            const headerTitleEl = document.querySelector('.header-title');
+            if (headerTitleEl) {
+                headerTitleEl.textContent = alias.toUpperCase();
+            }
+
+            // Subtitle: Hash small below
             headerStateLabel.innerHTML = `
                 <div class="session-name-stack" style="align-items: flex-end;">
-                    <span class="session-alias-primary">${alias.toUpperCase()}</span>
                     <span class="session-hash-secondary">${hash} · ${activeSession.state}</span>
                 </div>
             `;
@@ -76,6 +84,10 @@ async function updateStatus() {
             const progress = document.getElementById('sess-progress');
             if (progress) progress.style.width = `${(msgCount / limit) * 100}%`;
         } else {
+            const headerTitleEl = document.querySelector('.header-title');
+            if (headerTitleEl) {
+                headerTitleEl.textContent = 'CLAUDEVAULT';
+            }
             headerStateLabel.textContent = 'NO ACTIVE SESSION';
             if (headerStateDot) headerStateDot.style.backgroundColor = '#555555';
             
@@ -94,6 +106,8 @@ async function updateStatus() {
                 renderActiveSessions(activeSessions);
                 renderSessionHistory(sessionHistory);
             }
+        } else if (currentTab === 'files') {
+            loadFilesTab();
         }
 
         // Bottom status bar sync
@@ -351,48 +365,97 @@ async function loadSessions() {
     // Handled in updateStatus polling
 }
 
-async function loadFiles() {
+async function loadFilesTab() {
     const container = document.getElementById('files-list');
+    const uploadBtn = document.getElementById('btn-upload-suggested');
+    const suggestCountEl = document.getElementById('suggest-count');
+    if (!container) return;
     container.innerHTML = '';
+    
     try {
-        const sessionId = currentStatus?.activeSession?.session_id || null;
-        const files = await window.electronAPI.listRecentFiles(sessionId);
-        if (files) {
-            files.forEach((f, idx) => {
-                const row = document.createElement('div');
-                row.className = `file-row ${idx === 0 ? 'latest' : ''}`;
-                const timeStr = f.created_at ? new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--';
-                const ext = (f.file_type || (f.original_name?.split('.').pop() || '')).toString().toUpperCase();
-                row.innerHTML = `
-                  <div class="file-name-cell"><span>${f.original_name || 'UNKNOWN'}</span></div>
-                  <div class="file-meta-cell">
-                    <span class="mono-small" style="color:#555555; font-size:7px;">${timeStr}</span>
-                    <span class="mono-small" style="color: var(--accent-70); font-size:6px;">${ext}</span>
-                  </div>
-                `;
-                container.appendChild(row);
-            });
+        const activeSession = currentStatus?.activeSession;
+        const activeSessionId = activeSession?.session_id || null;
+        
+        let suggestions = [];
+        if (activeSession) {
+            suggestions = await window.electronAPI.getSuggestions(activeSession.project_id) || [];
         }
-    } catch (err) { console.error(err); }
-}
+        
+        const files = await window.electronAPI.listRecentFiles(null) || [];
+        
+        // Update Suggest count in header
+        if (suggestCountEl) suggestCountEl.textContent = suggestions.length;
+        
+        // Merge and Deduplicate by file_id
+        // We prioritize suggestions in the final list
+        const suggestSet = new Set(suggestions.map(s => s.file_id));
+        const finalFiles = [...suggestions.map(s => ({ ...s, isSuggested: true }))];
+        
+        files.forEach(f => {
+            if (!suggestSet.has(f.file_id)) {
+                finalFiles.push({ ...f, isSuggested: false });
+            }
+        });
 
-async function loadSuggestions() {
-    const activeSession = currentStatus?.activeSession;
-    if (!activeSession) return;
-    try {
-        const suggestions = await window.electronAPI.getSuggestions(activeSession.project_id);
-        const container = document.getElementById('suggest-list');
-        container.innerHTML = '';
-        if (suggestions) {
-            setElText('suggest-count', suggestions.length);
-            suggestions.forEach(s => {
-                const row = document.createElement('div');
-                row.className = 'suggest-row';
-                row.innerHTML = `<span class="mono-value">${s.original_name}</span>`;
-                container.appendChild(row);
-            });
+        if (finalFiles.length === 0) {
+            container.innerHTML = '<div class="mono-small" style="padding:14px; color:var(--text-muted); text-align:center;">NO FILES FOUND</div>';
+            return;
         }
-    } catch (err) { console.error(err); }
+
+        finalFiles.forEach((f, idx) => {
+            const isLinkedToActive = f.linked_session_id === activeSessionId;
+            const row = document.createElement('div');
+            const isSelected = selectedFileIds.has(f.file_id);
+            
+            row.className = `file-row ${idx === 0 ? 'latest' : ''} ${isSelected ? 'selected' : ''}`;
+            
+            const timeStr = f.created_at ? new Date(f.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--';
+            const ext = (f.file_type || (f.original_name?.split('.').pop() || '')).toString().toUpperCase();
+            
+            const sessionDisplay = f.session_alias || (f.linked_session_id ? f.linked_session_id.slice(0, 8) : null);
+            let statusText = f.isSuggested ? 'SUGG' : ext;
+            let statusColor = f.isSuggested ? 'var(--accent)' : 'var(--accent-70)';
+
+            if (isLinkedToActive) {
+                statusText = 'LINKED';
+                statusColor = '#4ADE80';
+            } else if (sessionDisplay && !f.isSuggested) {
+                statusText = sessionDisplay.toUpperCase();
+                statusColor = '#9CA3AF';
+            }
+
+            row.innerHTML = `
+              <div class="file-checkbox" style="${isLinkedToActive ? 'background-color:rgba(74, 222, 128, 0.1); border-color:#4ADE80; position:relative;' : ''}">
+                ${isLinkedToActive ? '<div style="position:absolute; width:6px; height:6px; background:#4ADE80; top:2px; left:2px;"></div>' : ''}
+              </div>
+              <div class="file-name-cell"><span style="${f.isSuggested ? 'color:var(--accent); font-weight:600;' : ''}">${f.original_name || 'UNKNOWN'}</span></div>
+              <div class="file-meta-cell">
+                <span class="mono-small" style="color:#555555; font-size:7px;">${timeStr}</span>
+                <span class="mono-small" style="color: ${statusColor}; font-size:6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 52px; text-align: right;">${statusText}</span>
+              </div>
+            `;
+
+            row.onclick = () => {
+                if (selectedFileIds.has(f.file_id)) {
+                    selectedFileIds.delete(f.file_id);
+                    row.classList.remove('selected');
+                } else {
+                    selectedFileIds.add(f.file_id);
+                    row.classList.add('selected');
+                }
+                if (uploadBtn) {
+                    uploadBtn.disabled = selectedFileIds.size === 0;
+                    const countText = selectedFileIds.size > 0 ? `UPLOAD (${selectedFileIds.size})` : 'UPLOAD SELECTED';
+                    uploadBtn.textContent = countText;
+                }
+            };
+
+            container.appendChild(row);
+        });
+    } catch (err) { 
+        console.error(err);
+        container.innerHTML = `<div class="mono-small" style="padding:14px; color:var(--accent); text-align:center;">LOAD ERROR</div>`;
+    }
 }
 
 function formatRemainingMs(ms) {
@@ -784,6 +847,81 @@ function hideHandoffOutput() {
 }
 
 /**
+ * CHATS tab logic (DG-069)
+ */
+async function loadChats() {
+    const activeSession = currentStatus?.activeSession;
+    const sessDisplay = document.getElementById('chats-active-session');
+    const list = document.getElementById('chat-history-list');
+    const countEl = document.getElementById('chat-history-count');
+    
+    if (!sessDisplay || !list || !countEl) return;
+
+    if (!activeSession) {
+        sessDisplay.textContent = 'NONE';
+        list.innerHTML = '<div class="mono-small" style="padding:14px; color:var(--text-muted); text-align:center;">NO ACTIVE SESSION</div>';
+        countEl.textContent = '0';
+        return;
+    }
+
+    const hash = activeSession.session_id.slice(0, 8);
+    const alias = activeSession.alias || activeSession.project_name || hash;
+    sessDisplay.textContent = `${hash.toUpperCase()} ~ ${alias.toUpperCase()}`;
+
+    try {
+        const chats = await window.electronAPI.listChats(activeSession.session_id);
+        countEl.textContent = chats.length;
+        list.innerHTML = '';
+
+        if (chats.length === 0) {
+            list.innerHTML = '<div class="mono-small" style="padding:14px; color:var(--text-muted); text-align:center;">NO CHATS LOGGED</div>';
+            return;
+        }
+
+        chats.forEach((c, idx) => {
+            const row = document.createElement('div');
+            const isLatest = idx === 0;
+            row.className = `chat-row ${isLatest ? 'latest' : ''}`;
+            
+            const date = new Date(c.created_at);
+            const ts = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).toUpperCase() + 
+                      ' · ' + 
+                      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            const sessionAlias = c.session_alias || c.session_id.slice(0, 8);
+            const sessionTag = `${c.session_id.slice(0, 8).toUpperCase()} ~ ${sessionAlias.toUpperCase()}`;
+
+            row.innerHTML = `
+                <div class="chat-info">
+                    <div class="chat-name">${escapeHtml(c.name)}</div>
+                    <div class="chat-meta">
+                        <span class="chat-ts">${ts}</span>
+                        <span class="chat-session-tag">${sessionTag}</span>
+                        ${isLatest ? '<span class="chat-latest-badge">LATEST</span>' : ''}
+                    </div>
+                    ${c.notes ? `<div class="chat-notes">${escapeHtml(c.notes)}</div>` : ''}
+                </div>
+                <div class="chat-delete-btn" title="Remove Entry">
+                    <div class="icon-pixel icon-undo-x"></div>
+                </div>
+            `;
+
+            row.querySelector('.chat-delete-btn').onclick = async (e) => {
+                e.stopPropagation();
+                if (confirm('Delete this chat entry?')) {
+                    await window.electronAPI.deleteChat(c.id);
+                    await loadChats();
+                }
+            };
+
+            list.appendChild(row);
+        });
+    } catch (err) {
+        console.error(`[POPOVER] Load Chats Error: ${err.message}`);
+    }
+}
+
+/**
  * Initialization
  */
 function init() {
@@ -814,6 +952,39 @@ function init() {
     bind('btn-unlinked-files', 'unlinked-files');
     bind('btn-run-cleanup', 'run-cleanup');
     bind('btn-pause-watcher', 'pause-watcher');
+
+    // Suggestions Upload
+    const uploadSuggestBtn = document.getElementById('btn-upload-suggested');
+    if (uploadSuggestBtn) {
+        uploadSuggestBtn.addEventListener('click', async () => {
+            if (selectedFileIds.size === 0) return;
+            const activeSessionId = currentStatus?.activeSession?.session_id;
+            if (!activeSessionId) return;
+
+            try {
+                const originalText = uploadSuggestBtn.textContent;
+                uploadSuggestBtn.textContent = 'UPLOADING...';
+                uploadSuggestBtn.disabled = true;
+
+                await window.electronAPI.linkFilesToSession(
+                    Array.from(selectedFileIds),
+                    activeSessionId
+                );
+
+                selectedFileIds.clear();
+                uploadSuggestBtn.textContent = originalText;
+                await updateStatus();
+                await loadFilesTab();
+            } catch (err) {
+                console.error(`[POPOVER] Upload Suggested Error: ${err.message}`);
+                uploadSuggestBtn.textContent = 'UPLOAD FAILED';
+                setTimeout(() => {
+                    uploadSuggestBtn.textContent = 'UPLOAD SELECTED';
+                    uploadSuggestBtn.disabled = selectedFileIds.size === 0;
+                }, 2000);
+            }
+        });
+    }
 
     // Accounts form
     const addBtn = document.getElementById('btn-add-account');
@@ -857,10 +1028,23 @@ function init() {
 
     if (copyPromptBtn) {
         copyPromptBtn.addEventListener('click', async () => {
+            const original = copyPromptBtn.textContent;
             try {
                 await navigator.clipboard.writeText(HANDOFF_PROMPT_TEXT);
+                copyPromptBtn.textContent = 'COPIED ✓';
+                copyPromptBtn.style.color = '#4ADE80';
+                copyPromptBtn.style.borderColor = '#4ADE80';
+                setTimeout(() => {
+                    copyPromptBtn.textContent = original;
+                    copyPromptBtn.style.color = '';
+                    copyPromptBtn.style.borderColor = '';
+                }, 2000);
             } catch (e) {
                 console.error('[POPOVER] Copy prompt failed:', e.message);
+                copyPromptBtn.textContent = 'COPY FAILED';
+                setTimeout(() => {
+                    copyPromptBtn.textContent = original;
+                }, 2000);
             }
         });
     }
@@ -984,6 +1168,40 @@ function init() {
                 }, 2500);
             } catch (e) {
                 console.error('[POPOVER] Copy template failed:', e.message);
+            }
+        });
+    }
+
+    // CHATS tab initialization
+    const addChatBtn = document.getElementById('btn-add-chat');
+    const chatInputName = document.getElementById('chat-input-name');
+    const chatInputNotes = document.getElementById('chat-input-notes');
+    const chatError = document.getElementById('chat-form-error');
+
+    if (addChatBtn) {
+        addChatBtn.addEventListener('click', async () => {
+            const activeSessionId = currentStatus?.activeSession?.session_id;
+            const name = chatInputName?.value || '';
+            const notes = chatInputNotes?.value || '';
+
+            if (chatError) chatError.classList.add('hidden');
+
+            try {
+                await window.electronAPI.addChat({
+                    sessionId: activeSessionId,
+                    name,
+                    notes
+                });
+
+                if (chatInputName) chatInputName.value = '';
+                if (chatInputNotes) chatInputNotes.value = '';
+                await loadChats();
+            } catch (err) {
+                console.error(`[POPOVER] Add Chat Error: ${err.message}`);
+                if (chatError) {
+                    chatError.textContent = err.message;
+                    chatError.classList.remove('hidden');
+                }
             }
         });
     }

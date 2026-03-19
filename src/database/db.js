@@ -119,6 +119,19 @@ function initDb(dbPath) {
 
     CREATE INDEX IF NOT EXISTS idx_handoff_drafts_session_created
       ON handoff_drafts(session_id, created_at);
+
+    -- CHATS tab (v1.0+): tracks manual chat names associated with sessions.
+    CREATE TABLE IF NOT EXISTS chats (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id   TEXT NOT NULL,
+      name         TEXT NOT NULL,
+      notes        TEXT,
+      created_at   INTEGER NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_chats_session_created
+      ON chats(session_id, created_at);
   `);
 
   return db;

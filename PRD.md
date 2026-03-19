@@ -1,10 +1,10 @@
 # PRD — ClaudeVault: File Pipeline & Session Continuity System
 
-**Version:** 0.3.0
+**Version:** 0.4.0
 **Status:** Draft
 **Owner:** TBD
 **Last Updated:** 2026-03-18
-**Changes from v0.2.0:** Added §5.7 Handoff Summary & Template. Added §5.7.1 (summary prompt) and §5.7.2 (handoff template). Updated Goals table (new P0 row). Removed "handoff flagged for v1.1" from Non-Goals and Out-of-Scope — handoff is now in v1. Updated §8 Constraints. All other content is unchanged from v0.2.0.
+**Changes from v0.3.0:** Merged FILES and SUGGEST tabs into unified FILES tab. Added §5.8 Chat History Tracking (CHATS tab).
 
 ---
 
@@ -80,27 +80,22 @@ This PRD explicitly does not cover:
 
 ---
 
-### 5.2 Session Linking
+### 5.2 Files Tab (Unified)
 
-> As a user, when my session approaches its context limit, I want files from that session linked to it — so I know what belongs where.
-
-**Acceptance criteria:**
-- Session state must be externally trackable (see TRD §4 for how this is detected)
-- Files ingested while session is in `NEAR_LIMIT` or `FINAL_WINDOW` state are linked to that session's ID
-- Files ingested outside those states are stored as `unlinked`
-- No file is ever silently dropped — all files land somewhere
-
----
-
-### 5.3 File Suggestion on New Session
-
-> As a user, starting a new Claude session, I want to see which files from my last session are relevant — so I can re-upload with one click instead of hunting through Downloads.
+> As a user, I want to see both suggested files for my session and recently downloaded files in one unified list — so I can manage my session context without redundancy.
 
 **Acceptance criteria:**
-- Suggestions are shown before the user sends their first message in a new session
-- Suggestions are ranked by filename similarity, recency, and session overlap score
-- User must explicitly confirm before any file is prepared for upload
-- "Auto-upload" mode is opt-in, off by default, and requires explicit toggle
+- One tab labeled **FILES** replaces the separate "FILES" and "SUGGEST" tabs.
+- The tab features a single scrollable list of files.
+- **Suggested** files are prioritized and appear at the top of the list.
+- Redundant entries (files that are both suggested and recent) are deduplicated into a single row.
+- A badge on the tab header shows the count of suggested files.
+- Suggested files are visually highlighted (e.g., coral text, "SUGG" label).
+- User can select any file via checkboxes and click "UPLOAD SELECTED" to link them to the active session.
+- "UPLOAD SELECTED" is disabled when no files are selected or no session is active.
+- The latest file in the list is visually highlighted with a left border.
+- Metadata (timestamp, session alias, or extension) is shown for each file.
+- If a file is already linked to a session, it shows the session's alias or hash.
 
 ---
 
@@ -147,7 +142,20 @@ This PRD explicitly does not cover:
 
 ---
 
-### 5.7 Handoff Summary & Template
+### 5.8 Chat History Tracking
+
+> As a user, I want to manually record the names of the Claude conversations I start and associate them with my current session — so I can easily find the exact chat that corresponds to a set of ingested files later.
+
+**Acceptance criteria:**
+- A new tab labeled **CHATS** is added to the navigation bar.
+- The tab displays the currently focused session's alias or hash at the top.
+- A form allows inputting a **Chat Name** (required) and **Notes** (optional).
+- Clicking **+ ADD** saves the entry with the current session ID and a timestamp.
+- The **Chat History** section shows a list of all chats associated with the active session, sorted by recency (newest first).
+- The latest chat entry is visually highlighted with a red vertical bar and a "LATEST" badge.
+- Each entry shows: Chat Name, Timestamp, Session ID ~ Alias, and any Notes (prefixed with '↳').
+- Users can delete any chat entry with a confirmation prompt.
+- The list updates automatically when switching sessions or adding new entries.
 
 > As a user nearing a session's context limit, I want to ask Claude for a structured summary, paste it into the widget, and get a ready-to-copy handoff prompt — so the next chat (on any account) picks up exactly where this one left off.
 
@@ -260,7 +268,7 @@ Do not restart or reinterpret the problem.
 |---|----------|-------|--------|
 | 1 | How is session state (`NEAR_LIMIT`, `FINAL_WINDOW`) detected without Claude API access? | Eng | **UNRESOLVED — blocks P0** |
 | 2 | What is the exact token/message threshold for `NEAR_LIMIT`? | Product | Unresolved |
-| 3 | Should the watcher track all file types or a configurable allowlist? | Product | Unresolved |
+| 3 | Should the watcher track all file types or a configurable allowlist? | Product | Resolved: Configurable via allowlist (default: .txt, .pdf, .py, .js, .csv, .json, .md, .png, .jpg, .html, .docx, .xlsx, .tsv, .java, .cpp, .jpeg) |
 | 4 | Who defines "project"? Is it user-created or auto-inferred? | Product | Unresolved |
 | 5 | Should `unlinked` files have a separate TTL from project-linked files? | Product | Unresolved |
 | 6 | What is the max concurrent active sessions limit? | Product | Default 5, configurable |

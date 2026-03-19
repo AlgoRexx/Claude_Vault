@@ -193,15 +193,46 @@ body {
 /* FILES TAB (DG-047) */
 .file-row {
     display: grid;
-    grid-template-columns: 1fr 52px;
-    height: 32px;
+    grid-template-columns: 24px 1fr 52px;
+    height: 36px;
     padding: 0 14px;
     align-items: center;
     border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+    cursor: pointer;
 }
 
 .file-row:hover { background-color: var(--bg-surface); transition: background 0.08s; }
 .file-row.latest { border-left: 2px solid var(--accent); padding-left: 12px; }
+.file-row.selected { background-color: rgba(255, 75, 53, 0.15); }
+.file-row.selected .file-name-cell span { color: #FFFFFF; font-weight: 600; }
+
+.file-checkbox {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.1s;
+}
+
+.file-row.selected .file-checkbox {
+    border-color: var(--accent);
+    background-color: var(--accent);
+}
+
+.file-checkbox::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: white;
+    display: none;
+}
+
+.file-row.selected .file-checkbox::after {
+    display: block;
+}
 
 .file-name-cell {
     direction: rtl;
@@ -237,9 +268,40 @@ body {
     height: 36px;
     padding: 7px 14px;
     border-bottom: 1px solid rgba(51, 51, 51, 0.4);
+    cursor: pointer;
 }
 
 .suggest-row:hover { background-color: var(--bg-surface); }
+.suggest-row.selected { background-color: rgba(255, 75, 53, 0.15); }
+.suggest-row.selected .mono-value { color: #FFFFFF; font-weight: 600; }
+
+.suggest-checkbox {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.1s;
+}
+
+.suggest-row.selected .suggest-checkbox {
+    border-color: var(--accent);
+    background-color: var(--accent);
+}
+
+.suggest-checkbox::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background-color: white;
+    display: none;
+}
+
+.suggest-row.selected .suggest-checkbox::after {
+    display: block;
+}
 
 /* LOG TAB (DG-049) */
 .log-row {
@@ -642,7 +704,110 @@ body {
 .hidden { display: none !important; }
 sup { color: var(--accent); font-size: 70%; vertical-align: super; }
 
-/* HANDOFF TAB (DG-066, DG-067) */
+/* CHATS TAB (DG-069) */
+.chat-row {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-row.latest {
+    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+}
+
+.chat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.chat-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #F0EDE8;
+}
+
+.chat-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chat-ts {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: #555555;
+    text-transform: uppercase;
+}
+
+.chat-session-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7px;
+    color: var(--accent);
+    border: 1px solid rgba(255, 75, 53, 0.2);
+    padding: 1px 4px;
+    text-transform: uppercase;
+}
+
+.chat-latest-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 7px;
+    color: #4ADE80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    padding: 1px 4px;
+    text-transform: uppercase;
+}
+
+.chat-notes {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: #9CA3AF;
+    margin-top: 2px;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.chat-notes::before {
+    content: '↳';
+    color: #555;
+}
+
+.chat-delete-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 12px;
+}
+
+.chat-delete-btn:hover {
+    background: rgba(255, 75, 53, 0.1);
+    border-color: rgba(255, 75, 53, 0.3);
+}
+
+.chat-delete-btn .icon-pixel {
+    width: 10px;
+    height: 10px;
+    background-color: #F0EDE8;
+}
+
+.chat-delete-btn:hover .icon-pixel {
+    background-color: var(--accent);
+}
 .handoff-step-title {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
@@ -664,6 +829,7 @@ sup { color: var(--accent); font-size: 70%; vertical-align: super; }
     overflow-y: auto;
     margin: 0 14px 8px 14px;
     white-space: pre-wrap;
+    user-select: text; /* Allow manual selection */
 }
 
 .handoff-copy-prompt-btn {
@@ -803,6 +969,7 @@ sup { color: var(--accent); font-size: 70%; vertical-align: super; }
     font-size: 8.5px;
     max-height: 220px;
     overflow-y: auto;
+    user-select: text; /* Allow manual selection */
 }
 
 .handoff-out-header {

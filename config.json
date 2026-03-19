@@ -15,7 +15,14 @@
     "py",
     "js",
     "ts",
-    "md"
+    "md",
+    "html",
+    "docx",
+    "xlsx",
+    "tsv",
+    "java",
+    "cpp",
+    "jpeg"
   ],
   "stabilizationThresholdMs": 2000,
   "pollIntervalMs": 500,

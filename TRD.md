@@ -1,10 +1,10 @@
 # TRD — ClaudeVault: File Pipeline & Session Continuity System
 
-**Version:** 0.3.0
+**Version:** 0.4.0
 **Status:** Draft
-**Depends on:** PRD v0.3.0
+**Depends on:** PRD v0.4.0
 **Last Updated:** 2026-03-18
-**Changes from v0.2.0:** Added TABLE: handoff_drafts to §5. Added §6b Handoff Parser (client-side regex, no API). Added handoff-related edge cases to §8. Updated tech stack §9. All other content is unchanged from v0.2.0.
+**Changes from v0.3.0:** Added TABLE: chats to §5. Added §11.7 Chat Tracking. Updated §6 File Suggestion Engine for unified FILES tab.
 
 ---
 
@@ -390,6 +390,25 @@ CREATE INDEX idx_ale_reset ON account_limit_events(reset_at);
 
 ---
 
+### TABLE: chats
+
+Stores manual records of Claude conversation names linked to a session.
+
+```sql
+CREATE TABLE chats (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id   TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  notes        TEXT,
+  created_at   INTEGER NOT NULL,
+  FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+);
+
+CREATE INDEX idx_chats_session_created ON chats(session_id, created_at);
+```
+
+---
+
 ### TABLE: handoff_drafts
 
 Stores the most recent parsed handoff draft so the user can retrieve it if the widget is closed before copying. Append-only for audit purposes; the UI always loads the row with the highest `created_at`.
@@ -433,7 +452,9 @@ CREATE TABLE session_focus (
 
 ---
 
-## 6. File Suggestion Engine
+## 6. File Suggestion Engine (FILES Tab - Suggested Section)
+
+The **FILES** tab combines both suggested and recently handled files. The **Suggested** section (top) surfacing relevant files for a new session.
 
 ### Input
 
@@ -456,6 +477,12 @@ function scoreFile(candidate, context) {
 ```
 
 **Confidence thresholds:** `>= 0.7` → high, `>= 0.4` → medium, `< 0.4` → low. Low-confidence files shown collapsed/unchecked by default.
+
+### linkFilesToSession(db, fileIds, sessionId)
+
+- Updates the `linked_session_id` and `project_id` for multiple files at once.
+- Logs a `LINKED` event for each file.
+- Used when the user clicks "UPLOAD SELECTED" in the FILES tab.
 
 ---
 
@@ -820,7 +847,7 @@ async function archiveProject(projectId, projectDir, archiveDir) {
 | 1 | Session state detection | Manual signal / Message heuristic / DOM scrape | Manual signal for v1; heuristic overlay |
 | 2 | UI surface | Electron tray app / CLI / Web UI on localhost | CLI first; tray app in v2 |
 | 3 | Project definition | User-created / Auto-inferred from domain/tab title | User-created for v1 |
-| 4 | File type allowlist | Hardcoded / Configurable / Off | Configurable via `config.json`; default: csv, json, pdf, png, jpg, txt, py, js, ts, md |
+| 4 | File type allowlist | Hardcoded / Configurable / Off | Configurable via `config.json`; default: csv, json, pdf, png, jpg, txt, py, js, ts, md, html, docx, xlsx, tsv, java, cpp, jpeg |
 | 5 | Suggestion delivery mechanism | Push (notification) / Pull (on demand) | Pull — user opens suggestion panel before new session |
 | 6 | Weekly limit reset | Rolling 7 days from hit_at / Pin to Monday 00:00 | Rolling 7 days (default) — configurable |
 
@@ -836,25 +863,16 @@ See TABLE: sessions additions in §5 above.
 
 ### 11.2 Multi-Session Manager
 
-```js
-function switchFocus(newSessionId) {
-  const existing = db.prepare(
-    'SELECT session_id FROM sessions WHERE session_id = ? AND state = ?'
-  ).get(newSessionId, 'ACTIVE');
-  if (!existing) throw new Error(`Session ${newSessionId} is not ACTIVE`);
-  db.prepare('INSERT INTO session_focus (session_id, focused_at) VALUES (?, ?)').run(newSessionId, Date.now());
-}
-
-function getCurrentFocus() {
-  return db.prepare('SELECT session_id FROM session_focus ORDER BY focused_at DESC LIMIT 1').get();
-}
-
-function ingestFile(file) {
-  const focus = getCurrentFocus();
-  const sessionId = focus ? focus.session_id : null;
-  linkFileToSession(file.file_id, sessionId);
-}
-```
+*   `startSession(db, projectId, config, maxConcurrentSessions)`:
+    *   Generates a new `session_id`.
+    *   Creates a new row in the `sessions` and `session_focus` tables.
+    *   **Eagerly creates the session directory** on disk: `~/Downloads/claude-vault/projects/<project_id>/sessions/<session_id>`.
+*   `reopenSession(db, sessionId, config, maxConcurrentSessions)`:
+    *   Sets session state to `ACTIVE`.
+    *   Adds a new `session_focus` entry.
+    *   Ensures the session directory exists on disk.
+*   `switchFocus(db, sessionId)`:
+    *   Inserts a new `session_focus` entry to make the session the active target for file ingestion.
 
 ---
 
@@ -936,6 +954,14 @@ ORDER BY s.ended_at DESC;
 
 ---
 
+### 11.7 Chat Tracking (CHATS Tab)
+
+- `addChat(db, { sessionId, name, notes })`: Inserts a new chat record.
+- `listChats(db, sessionId)`: Retrieves all chats for a session, newest first.
+- `deleteChat(db, chatId)`: Removes a chat record.
+
+---
+
 ## 12. config.json
 
 ```json
@@ -944,7 +970,7 @@ ORDER BY s.ended_at DESC;
   "vault_dir": "~/Downloads/claudevault",
   "db_path": "~/Downloads/claudevault/vault.db",
   "archive_dir": "~/Downloads/claudevault/archive",
-  "file_type_allowlist": ["csv", "json", "pdf", "png", "jpg", "txt", "py", "js", "ts", "md"],
+  "file_type_allowlist": ["csv", "json", "pdf", "png", "jpg", "txt", "py", "js", "ts", "md", "html", "docx", "xlsx", "tsv", "java", "cpp", "jpeg"],
   "stabilization_threshold_ms": 2000,
   "near_limit_message_count": 20,
   "final_window_message_count": 30,

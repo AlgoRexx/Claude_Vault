@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Suggestions
   getSuggestions: (projectId) => ipcRenderer.invoke('get-suggestions', projectId),
+  linkFilesToSession: (fileIds, sessionId) => ipcRenderer.invoke('link-files-to-session', fileIds, sessionId),
   
   // Watcher
   toggleWatcher: () => ipcRenderer.invoke('toggle-watcher'),
@@ -46,6 +47,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // HANDOFF tab
   saveHandoffDraft: (payload) => ipcRenderer.invoke('save-handoff-draft', payload),
   getLatestHandoffDraft: (sessionId = null) => ipcRenderer.invoke('get-latest-handoff-draft', sessionId),
+
+  // CHATS tab
+  addChat: (payload) => ipcRenderer.invoke('add-chat', payload),
+  listChats: (sessionId) => ipcRenderer.invoke('list-chats', sessionId),
+  deleteChat: (chatId) => ipcRenderer.invoke('delete-chat', chatId),
 
   // Logs and Events (could add more)
   onWatcherUpdate: (callback) => ipcRenderer.on('watcher-update', (event, data) => callback(data))

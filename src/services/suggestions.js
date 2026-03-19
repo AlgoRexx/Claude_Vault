@@ -47,6 +47,7 @@ function scoreFile(candidate, context) {
 
 function getSuggestions(db, projectId) {
   // Candidates: files linked to sessions in the same project, or recent unlinked files
+  // But exclude files already linked to an ACTIVE session of this project
   const query = `
     SELECT 
       f.file_id, 
@@ -56,12 +57,15 @@ function getSuggestions(db, projectId) {
       f.linked_session_id,
       (SELECT COUNT(*) FROM files WHERE project_id = ? AND original_name = f.original_name) as sharedSessionCount
     FROM files f
-    WHERE f.project_id = ? OR f.project_id IS NULL
+    WHERE (f.project_id = ? OR f.project_id IS NULL)
+      AND (f.linked_session_id IS NULL OR f.linked_session_id NOT IN (
+        SELECT session_id FROM sessions WHERE project_id = ? AND state != 'CLOSED'
+      ))
     ORDER BY f.created_at DESC
     LIMIT 50
   `;
   
-  const candidates = db.prepare(query).all(projectId, projectId);
+  const candidates = db.prepare(query).all(projectId, projectId, projectId);
 
   // Context: files from the last session of this project
   const lastSession = db.prepare('SELECT session_id FROM sessions WHERE project_id = ? AND state = \'CLOSED\' ORDER BY ended_at DESC LIMIT 1').get(projectId);
@@ -86,6 +90,27 @@ function getSuggestions(db, projectId) {
   return scored.slice(0, 5); // Return top 5 suggestions
 }
 
+function linkFilesToSession(db, fileIds, sessionId) {
+  const session = db.prepare('SELECT project_id FROM sessions WHERE session_id = ?').get(sessionId);
+  if (!session) throw new Error(`SUGGESTIONS ERROR · SESSION NOT FOUND · ${sessionId}`);
+
+  db.transaction(() => {
+    for (const fileId of fileIds) {
+      db.prepare(`
+        UPDATE files 
+        SET linked_session_id = ?, project_id = ?
+        WHERE file_id = ?
+      `).run(sessionId, session.project_id, fileId);
+
+      db.prepare(`
+        INSERT INTO file_events (file_id, event_type, detail, timestamp)
+        VALUES (?, 'LINKED', ?, ?)
+      `).run(fileId, JSON.stringify({ sessionId, projectId: session.project_id }), Date.now());
+    }
+  })();
+}
+
 module.exports = {
-  getSuggestions
+  getSuggestions,
+  linkFilesToSession
 };

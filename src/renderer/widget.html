@@ -33,10 +33,10 @@
         <div class="tab-bar">
             <div id="tab-session" class="tab-item active mono-small">SESSION</div>
             <div id="tab-files" class="tab-item mono-small">FILES</div>
-            <div id="tab-suggest" class="tab-item mono-small">SUGGEST</div>
             <div id="tab-accts" class="tab-item mono-small">ACCTS</div>
             <div id="tab-actions" class="tab-item mono-small">ACTIONS</div>
             <div id="tab-handoff" class="tab-item mono-small">HANDOFF</div>
+            <div id="tab-chats" class="tab-item mono-small">CHATS</div>
         </div>
 
         <!-- Tab Panels -->
@@ -111,18 +111,15 @@
                 </div>
             </div>
 
-            <!-- FILES Panel (DG-047) -->
+            <!-- FILES Panel (DG-047/DG-048 Combined) -->
             <div id="panel-files" class="panel">
-                <div id="files-list"></div>
-            </div>
-
-            <!-- SUGGEST Panel (DG-048) -->
-            <div id="panel-suggest" class="panel">
-                <div class="suggest-header">
-                    <div class="mono-small" style="color: var(--accent);">New Session · Suggested<sup id="suggest-count">0</sup></div>
-                    <button class="action-btn-sharp" style="border-color: var(--accent); color: var(--accent);">UPLOAD SELECTED</button>
+                <div class="suggest-header" style="border-top: none;">
+                    <div class="mono-small" style="color: var(--accent);">FILES<sup id="suggest-count">0</sup></div>
+                    <button id="btn-upload-suggested" class="action-btn-sharp" style="border-color: var(--accent); color: var(--accent);" disabled>UPLOAD SELECTED</button>
                 </div>
-                <div id="suggest-list"></div>
+                <div id="files-list">
+                    <!-- Loaded via JS -->
+                </div>
             </div>
 
             <!-- ACCTS Panel (account limit tracking) -->
@@ -213,6 +210,38 @@ Do not write anything outside this structure.
             <div id="handoff-output-wrapper" class="handoff-output-wrapper hidden">
                 <div id="handoff-output" class="handoff-output"></div>
                 <button id="btn-copy-handoff-template" class="handoff-copy-template-btn">COPY TEMPLATE</button>
+            </div>
+        </div>
+
+        <!-- CHATS Panel -->
+        <div id="panel-chats" class="panel">
+            <div class="kv-block" style="padding-top: 14px; border-bottom: 1px solid #222;">
+                <div class="kv-row" style="margin-bottom: 0;">
+                    <span class="mono-small" style="color: #555;">SESSION</span>
+                    <span id="chats-active-session" class="mono-value" style="color: #9CA3AF;">NONE</span>
+                </div>
+            </div>
+
+            <div class="actions-section" style="padding-top: 14px; border-bottom: 1px solid #222;">
+                <div class="section-label">CHAT NAME</div>
+                <textarea id="chat-input-name" class="handoff-textarea" style="height: 48px; margin-bottom: 10px;" placeholder="e.g., Python debugging session"></textarea>
+                
+                <div class="section-label">NOTES (OPTIONAL)</div>
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <textarea id="chat-input-notes" class="handoff-textarea" style="height: 48px; flex: 1; margin: 0;" placeholder="e.g., context before 5hr limit"></textarea>
+                    <button id="btn-add-chat" class="action-btn-sharp" style="height: 48px; width: 80px; font-size: 11px; font-weight: 700; color: #FFF; border-color: #333;">+ ADD</button>
+                </div>
+                <div id="chat-form-error" class="handoff-inline-error hidden" style="margin: 6px 0 0;"></div>
+            </div>
+
+            <div class="actions-section" style="padding-top: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div class="section-label" style="margin-bottom: 0;">CHAT HISTORY</div>
+                    <div class="mono-small" style="color: var(--accent);"><span id="chat-history-count">0</span> ENTRIES</div>
+                </div>
+                <div id="chat-history-list">
+                    <!-- Loaded via JS -->
+                </div>
             </div>
         </div>
         </div>

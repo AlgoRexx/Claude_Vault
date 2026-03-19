@@ -2,12 +2,24 @@ const crypto = require('crypto');
 const fs = require('fs-extra');
 const path = require('path');
 
-function createProject(db, name) {
+function createProject(db, name, config) {
   const projectId = crypto.randomUUID();
   db.prepare(`
     INSERT INTO projects (project_id, name, created_at, last_active)
     VALUES (?, ?, ?, ?)
   `).run(projectId, name, Date.now(), Date.now());
+
+  // Eagerly create project directory (DG-068)
+  if (config && config.projectStore) {
+    const projectPath = path.join(config.projectStore, projectId);
+    try {
+      fs.ensureDirSync(projectPath);
+      console.log(`PROJECT · CREATED DIR · ${projectPath}`);
+    } catch (err) {
+      console.error(`PROJECT · ERROR CREATING DIR · ${projectPath} · ${err.message}`);
+    }
+  }
+
   return projectId;
 }
 
@@ -15,7 +27,7 @@ function listProjects(db) {
   return db.prepare('SELECT * FROM projects ORDER BY last_active DESC').all();
 }
 
-function startSession(db, projectId, maxConcurrentSessions = 5) {
+function startSession(db, projectId, config, maxConcurrentSessions = 5) {
   // Check concurrent session limit
   const activeCount = db.prepare("SELECT COUNT(*) as n FROM sessions WHERE state != 'CLOSED'").get().n;
   if (activeCount >= maxConcurrentSessions) {
@@ -38,6 +50,17 @@ function startSession(db, projectId, maxConcurrentSessions = 5) {
     // Update last_active in project
     db.prepare('UPDATE projects SET last_active = ? WHERE project_id = ?').run(Date.now(), projectId);
   })();
+
+  // Eagerly create the session directory on disk (DG-040, DG-060)
+  if (config && config.projectStore) {
+    const sessionDirPath = path.join(config.projectStore, projectId, 'sessions', sessionId);
+    try {
+      fs.ensureDirSync(sessionDirPath);
+      console.log(`SESSION · CREATED DIR · ${sessionDirPath}`);
+    } catch (err) {
+      console.error(`SESSION · ERROR CREATING DIR · ${sessionDirPath} · ${err.message}`);
+    }
+  }
 
   return sessionId;
 }
@@ -115,7 +138,7 @@ function setAlias(db, sessionId, alias) {
   db.prepare('UPDATE sessions SET alias = ? WHERE session_id = ?').run(alias || null, sessionId);
 }
 
-function reopenSession(db, sessionId, maxConcurrentSessions = 5) {
+function reopenSession(db, sessionId, config, maxConcurrentSessions = 5) {
   const session = db.prepare('SELECT * FROM sessions WHERE session_id = ? AND state = \'CLOSED\'').get(sessionId);
   if (!session) throw new Error(`SESSION ERROR · SESSION NOT CLOSED · ${sessionId}`);
 
@@ -134,6 +157,16 @@ function reopenSession(db, sessionId, maxConcurrentSessions = 5) {
       VALUES (?, ?)
     `).run(sessionId, Date.now());
   })();
+
+  // Ensure directory exists on disk (case where it might have been manually deleted or creation failed)
+  if (config && config.projectStore) {
+    const sessionDirPath = path.join(config.projectStore, session.project_id, 'sessions', sessionId);
+    try {
+      fs.ensureDirSync(sessionDirPath);
+    } catch (err) {
+      console.error(`SESSION · ERROR ENSURING DIR · ${sessionDirPath} · ${err.message}`);
+    }
+  }
 }
 
 function deleteSession(db, sessionId, config) {

@@ -105,6 +105,20 @@ function initDb(dbPath) {
 
     CREATE INDEX IF NOT EXISTS idx_ale_account_limit_reset
       ON account_limit_events(account_id, limit_type, reset_at);
+
+    -- HANDOFF tab (v1.0+): stores last parsed handoff template for recovery.
+    CREATE TABLE IF NOT EXISTS handoff_drafts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id TEXT,
+      raw_input TEXT NOT NULL,
+      parsed_json TEXT NOT NULL,
+      built_template TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_handoff_drafts_session_created
+      ON handoff_drafts(session_id, created_at);
   `);
 
   return db;

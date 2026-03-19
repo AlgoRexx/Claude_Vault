@@ -139,9 +139,12 @@ body {
     color: var(--text-muted);
     cursor: pointer;
     font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tab-item:hover { color: var(--text-secondary); }
@@ -638,3 +641,196 @@ body {
 
 .hidden { display: none !important; }
 sup { color: var(--accent); font-size: 70%; vertical-align: super; }
+
+/* HANDOFF TAB (DG-066, DG-067) */
+.handoff-step-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #555555;
+    margin-bottom: 8px;
+    padding: 0 14px;
+}
+
+.handoff-prompt-block {
+    background: #0C0C0C;
+    border: 1px solid #2a2a2a;
+    padding: 8px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: #9CA3AF;
+    max-height: 80px;
+    overflow-y: auto;
+    margin: 0 14px 8px 14px;
+    white-space: pre-wrap;
+}
+
+.handoff-copy-prompt-btn {
+    width: calc(100% - 28px);
+    margin: 0 14px;
+    border: 1px solid rgba(255, 75, 53, 0.35);
+    background: transparent;
+    color: rgba(255, 75, 53, 0.6);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    padding: 7px 10px;
+    cursor: pointer;
+}
+
+.handoff-copy-prompt-btn:hover {
+    border-color: rgba(255, 75, 53, 0.6);
+    color: var(--accent);
+}
+
+.handoff-divider {
+    border-top: 1px solid #222;
+    margin: 12px 14px;
+    height: 0;
+}
+
+.handoff-textarea {
+    margin: 0 14px;
+    width: calc(100% - 28px);
+    background: #0C0C0C;
+    border: 1px solid #2a2a2a;
+    color: #9CA3AF;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    padding: 8px 10px;
+    height: 88px;
+    resize: none;
+    outline: none;
+}
+
+.handoff-textarea:focus {
+    border-color: rgba(255, 75, 53, 0.35);
+}
+
+.handoff-parse-btn {
+    width: calc(100% - 28px);
+    margin: 8px 14px 0 14px;
+    border: 1px solid rgba(255, 75, 53, 0.5);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    padding: 7px 10px;
+    cursor: pointer;
+}
+
+.handoff-parse-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.handoff-inline-error {
+    margin: 6px 14px 0 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    color: rgba(255, 75, 53, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.handoff-restore-row {
+    margin: 0 14px 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    color: #9CA3AF;
+}
+
+.handoff-restore-ts {
+    color: #555555;
+}
+
+.handoff-restore-btn {
+    border: 1px solid rgba(255, 75, 53, 0.35);
+    background: transparent;
+    color: rgba(255, 75, 53, 0.6);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+.handoff-restore-btn:hover {
+    border-color: rgba(255, 75, 53, 0.7);
+    color: var(--accent);
+}
+
+.handoff-reference-files {
+    background: #0C0C0C;
+    border: 1px solid #2a2a2a;
+    margin: 10px 14px 0 14px;
+    padding: 10px 10px;
+}
+
+.handoff-ref-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    color: #FF4B35;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+}
+
+.handoff-reference-body {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    color: #F0EDE8;
+    white-space: pre-wrap;
+    max-height: 90px;
+    overflow-y: auto;
+}
+
+.handoff-output-wrapper {
+    margin: 10px 14px 0 14px;
+}
+
+.handoff-output {
+    background: #0C0C0C;
+    border: 1px solid #2a2a2a;
+    padding: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.handoff-out-header {
+    color: var(--accent);
+}
+
+.handoff-out-body {
+    color: var(--text-value);
+}
+
+.handoff-out-footer {
+    color: rgba(255, 75, 53, 0.5);
+}
+
+.handoff-copy-template-btn {
+    width: 100%;
+    margin-top: 8px;
+    border-radius: 6px;
+    border: 1px solid #4ADE80;
+    background: transparent;
+    color: #4ADE80;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.handoff-copy-template-btn:hover {
+    border-color: rgba(74, 222, 128, 0.7);
+}

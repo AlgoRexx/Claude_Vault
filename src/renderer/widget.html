@@ -36,6 +36,7 @@
             <div id="tab-suggest" class="tab-item mono-small">SUGGEST</div>
             <div id="tab-accts" class="tab-item mono-small">ACCTS</div>
             <div id="tab-actions" class="tab-item mono-small">ACTIONS</div>
+            <div id="tab-handoff" class="tab-item mono-small">HANDOFF</div>
         </div>
 
         <!-- Tab Panels -->
@@ -174,6 +175,46 @@
                     </div>
                 </div>
             </div>
+
+        <!-- HANDOFF Panel -->
+        <div id="panel-handoff" class="panel">
+            <div class="handoff-step-title">STEP 1 — COPY THIS PROMPT INTO CLAUDE</div>
+            <div id="handoff-prompt-block" class="handoff-prompt-block">
+Summarize the entire conversation in this STRICT format:
+
+1. OBJECTIVE:
+2. CURRENT STATE:
+3. KEY DECISIONS:
+4. FILES USED:
+5. IMPORTANT CONTEXT:
+6. NEXT STEPS:
+
+Do not write anything outside this structure.
+            </div>
+            <button id="btn-copy-handoff-prompt" class="handoff-copy-prompt-btn">COPY PROMPT</button>
+            <div class="handoff-divider"></div>
+
+            <div class="handoff-step-title">STEP 2 — PASTE CLAUDE'S RESPONSE, GET TEMPLATE</div>
+            <div id="handoff-restore-row" class="handoff-restore-row hidden">
+                <span id="handoff-restore-label">Restore last draft?</span>
+                <span id="handoff-restore-ts" class="handoff-restore-ts"></span>
+                <button id="btn-restore-handoff" class="handoff-restore-btn">RESTORE</button>
+            </div>
+
+            <textarea id="handoff-input" class="handoff-textarea" placeholder="Paste Claude's 6-section summary here..."></textarea>
+            <button id="btn-parse-handoff" class="handoff-parse-btn" disabled>PARSE → BUILD TEMPLATE</button>
+            <div id="handoff-parse-error" class="handoff-inline-error hidden"></div>
+
+            <div id="handoff-reference-files" class="handoff-reference-files hidden">
+                <div class="handoff-ref-title">FILES USED (REFERENCE)</div>
+                <div id="handoff-reference-files-body" class="handoff-reference-body"></div>
+            </div>
+
+            <div id="handoff-output-wrapper" class="handoff-output-wrapper hidden">
+                <div id="handoff-output" class="handoff-output"></div>
+                <button id="btn-copy-handoff-template" class="handoff-copy-template-btn">COPY TEMPLATE</button>
+            </div>
+        </div>
         </div>
 
         <!-- Status Bar (DG-051) -->

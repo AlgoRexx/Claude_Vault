@@ -29,6 +29,8 @@ const {
   listAccountsWithLimitStatus
 } = require('./services/accounts');
 
+const { saveHandoffDraft, getLatestHandoffDraft } = require('./services/handoff');
+
 let mainWindow;
 let popoverWindow;
 let tray;
@@ -242,6 +244,10 @@ function setupIpc() {
   ipcMain.handle('log-account-hit', (event, accountId, limitType) => logAccountHit(db, config, accountId, limitType));
   ipcMain.handle('undo-account-hit', (event, accountId, limitType) => undoAccountHit(db, accountId, limitType));
   ipcMain.handle('switch-account', (event, accountId) => switchAccountFocus(db, accountId));
+
+  // HANDOFF tab
+  ipcMain.handle('save-handoff-draft', (event, payload) => saveHandoffDraft(db, payload));
+  ipcMain.handle('get-latest-handoff-draft', (event, sessionId = null) => getLatestHandoffDraft(db, sessionId));
 }
 
 app.whenReady().then(() => {

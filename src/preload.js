@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   undoAccountHit: (accountId, limitType) => ipcRenderer.invoke('undo-account-hit', accountId, limitType),
   switchAccount: (accountId) => ipcRenderer.invoke('switch-account', accountId),
 
+  // HANDOFF tab
+  saveHandoffDraft: (payload) => ipcRenderer.invoke('save-handoff-draft', payload),
+  getLatestHandoffDraft: (sessionId = null) => ipcRenderer.invoke('get-latest-handoff-draft', sessionId),
+
   // Logs and Events (could add more)
   onWatcherUpdate: (callback) => ipcRenderer.on('watcher-update', (event, data) => callback(data))
 });

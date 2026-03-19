@@ -25,6 +25,7 @@ function switchTab(tabId) {
         if (tabId === 'files') loadFiles();
         if (tabId === 'suggest') loadSuggestions();
         if (tabId === 'accts') loadAccounts();
+        if (tabId === 'handoff') loadHandoff();
     } catch (err) {
         console.error(`[POPOVER] Load Tab Error: ${err.message}`);
     }
@@ -611,6 +612,178 @@ function renderAccounts(accounts) {
 }
 
 /**
+ * HANDOFF tab logic (DG-066, DG-067)
+ */
+const HANDOFF_PROMPT_TEXT = `Summarize the entire conversation in this STRICT format:
+
+1. OBJECTIVE:
+2. CURRENT STATE:
+3. KEY DECISIONS:
+4. FILES USED:
+5. IMPORTANT CONTEXT:
+6. NEXT STEPS:
+
+Do not write anything outside this structure.`;
+
+const HANDOFF_SECTION_DEFS = [
+    { key: 'objective', label: 'OBJECTIVE' },
+    { key: 'current_state', label: 'CURRENT STATE' },
+    { key: 'key_decisions', label: 'KEY DECISIONS' },
+    { key: 'files_used', label: 'FILES USED' },
+    { key: 'important_context', label: 'IMPORTANT CONTEXT' },
+    { key: 'next_steps', label: 'NEXT STEPS' }
+];
+
+const HANDOFF_HEADERS_SET = new Set(HANDOFF_SECTION_DEFS.map(s => `${s.label}:`));
+const HANDOFF_FOOTER_LINES_SET = new Set([
+    'Continue exactly from NEXT STEPS.',
+    'Do not restart or reinterpret the problem.'
+]);
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function parseHandoffSummary(rawText) {
+    // Split on numbered section headers (keeps each section as its own part).
+    const parts = rawText
+        .split(/(?=^\s*\d+\.\s)/m)
+        .map(p => p.trim())
+        .filter(Boolean);
+
+    const result = {};
+
+    for (const part of parts) {
+        for (const { key, label } of HANDOFF_SECTION_DEFS) {
+            const headerRe = new RegExp(`^\\d+\\.\\s*${label}:?\\s*`, 'i');
+            if (headerRe.test(part)) {
+                result[key] = part.replace(headerRe, '').trim();
+                break;
+            }
+        }
+    }
+
+    for (const { key, label } of HANDOFF_SECTION_DEFS) {
+        if (!result[key] || result[key].length === 0) {
+            throw new Error(`HANDOFF_PARSE_ERROR · Missing or empty section: ${label}`);
+        }
+    }
+
+    return result;
+}
+
+function buildHandoffTemplate(parsed) {
+    // Per PRD/TRD: FILES section contains only the fixed re-upload instruction.
+    return `We were working on the following:
+
+OBJECTIVE:
+${parsed.objective}
+
+CURRENT STATE:
+${parsed.current_state}
+
+KEY DECISIONS:
+${parsed.key_decisions}
+
+IMPORTANT CONTEXT:
+${parsed.important_context}
+
+FILES:
+(Re-upload the required files now)
+
+NEXT STEPS:
+${parsed.next_steps}
+
+Continue exactly from NEXT STEPS.
+Do not restart or reinterpret the problem.`;
+}
+
+function buildHandoffOutputHtml(templateText) {
+    const lines = String(templateText).split('\n');
+    return lines.map(line => {
+        const trimmed = line.trim();
+        if (HANDOFF_HEADERS_SET.has(trimmed)) {
+            return `<div class="handoff-out-header">${escapeHtml(line)}</div>`;
+        }
+        if (HANDOFF_FOOTER_LINES_SET.has(trimmed)) {
+            return `<div class="handoff-out-footer">${escapeHtml(line)}</div>`;
+        }
+        if (trimmed.length === 0) return `<div class="handoff-out-body">&nbsp;</div>`;
+        return `<div class="handoff-out-body">${escapeHtml(line)}</div>`;
+    }).join('');
+}
+
+let handoffLatestBuiltTemplate = null;
+let handoffRestoreDraft = null;
+
+async function loadHandoff() {
+    const textarea = document.getElementById('handoff-input');
+    const restoreRow = document.getElementById('handoff-restore-row');
+    const restoreTs = document.getElementById('handoff-restore-ts');
+    const parseBtn = document.getElementById('btn-parse-handoff');
+    const parseErrorEl = document.getElementById('handoff-parse-error');
+    const outputWrap = document.getElementById('handoff-output-wrapper');
+    const refFilesWrap = document.getElementById('handoff-reference-files');
+
+    if (!textarea || !parseBtn || !parseErrorEl || !outputWrap || !refFilesWrap) return;
+
+    // When user edits textarea, we hide output in the input handler; on tab switch, respect current textarea value.
+    parseErrorEl.classList.add('hidden');
+    parseErrorEl.textContent = '';
+
+    const sessionId = currentStatus?.activeSession?.session_id || null;
+    const rawValue = textarea.value || '';
+
+    // Disable parse when textarea is empty.
+    const shouldEnable = rawValue.trim().length > 0;
+    parseBtn.disabled = !shouldEnable;
+
+    // Restore last draft only if textarea is still empty.
+    if (rawValue.trim().length === 0) {
+        try {
+            const draft = await window.electronAPI.getLatestHandoffDraft(sessionId);
+            if (draft) {
+                restoreRow?.classList.remove('hidden');
+                if (restoreTs) restoreTs.textContent = new Date(draft.createdAt).toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+                handoffRestoreDraft = draft;
+            } else {
+                restoreRow?.classList.add('hidden');
+                handoffRestoreDraft = null;
+            }
+        } catch (err) {
+            console.error(`[POPOVER] Handoff restore error: ${err.message}`);
+            restoreRow?.classList.add('hidden');
+            handoffRestoreDraft = null;
+        }
+    } else {
+        restoreRow?.classList.add('hidden');
+        handoffRestoreDraft = null;
+    }
+}
+
+function hideHandoffOutput() {
+    const outputWrap = document.getElementById('handoff-output-wrapper');
+    const refFilesWrap = document.getElementById('handoff-reference-files');
+    const parseErrorEl = document.getElementById('handoff-parse-error');
+    const restoreRow = document.getElementById('handoff-restore-row');
+    const parseBtn = document.getElementById('btn-parse-handoff');
+
+    if (parseErrorEl) {
+        parseErrorEl.classList.add('hidden');
+        parseErrorEl.textContent = '';
+    }
+    if (outputWrap) outputWrap.classList.add('hidden');
+    if (refFilesWrap) refFilesWrap.classList.add('hidden');
+    if (restoreRow) restoreRow.classList.add('hidden');
+    if (parseBtn) parseBtn.disabled = true;
+    handoffLatestBuiltTemplate = null;
+}
+
+/**
  * Initialization
  */
 function init() {
@@ -660,6 +833,157 @@ function init() {
                     errEl.textContent = err.message;
                     errEl.classList.remove('hidden');
                 }
+            }
+        });
+    }
+
+    // HANDOFF UI bindings (DG-066, DG-067)
+    const copyPromptBtn = document.getElementById('btn-copy-handoff-prompt');
+    const textarea = document.getElementById('handoff-input');
+    const parseBtn = document.getElementById('btn-parse-handoff');
+    const parseErrorEl = document.getElementById('handoff-parse-error');
+    const restoreRow = document.getElementById('handoff-restore-row');
+    const restoreBtn = document.getElementById('btn-restore-handoff');
+    const referenceBody = document.getElementById('handoff-reference-files-body');
+    const outputEl = document.getElementById('handoff-output');
+    const outputWrap = document.getElementById('handoff-output-wrapper');
+    const refFilesWrap = document.getElementById('handoff-reference-files');
+    const copyTemplateBtn = document.getElementById('btn-copy-handoff-template');
+
+    const setParseEnabled = () => {
+        if (!parseBtn || !textarea) return;
+        parseBtn.disabled = textarea.value.trim().length === 0;
+    };
+
+    if (copyPromptBtn) {
+        copyPromptBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(HANDOFF_PROMPT_TEXT);
+            } catch (e) {
+                console.error('[POPOVER] Copy prompt failed:', e.message);
+            }
+        });
+    }
+
+    if (textarea) {
+        textarea.addEventListener('input', () => {
+            // Any edits invalidate previous parse output.
+            if (parseErrorEl) parseErrorEl.classList.add('hidden');
+            if (restoreRow) restoreRow.classList.add('hidden');
+            if (outputWrap) outputWrap.classList.add('hidden');
+            if (refFilesWrap) refFilesWrap.classList.add('hidden');
+            handoffLatestBuiltTemplate = null;
+            setParseEnabled();
+            textarea.style.borderColor = '#2a2a2a';
+        });
+    }
+
+    if (parseBtn) {
+        parseBtn.addEventListener('click', async () => {
+            if (!textarea) return;
+            const rawText = textarea.value || '';
+
+            if (parseErrorEl) {
+                parseErrorEl.classList.add('hidden');
+                parseErrorEl.textContent = '';
+            }
+
+            try {
+                const parsed = parseHandoffSummary(rawText);
+                const builtTemplate = buildHandoffTemplate(parsed);
+                handoffLatestBuiltTemplate = builtTemplate;
+
+                if (referenceBody && refFilesWrap) {
+                    refFilesWrap.classList.remove('hidden');
+                    referenceBody.textContent = parsed.files_used || '';
+                }
+
+                if (outputEl && outputWrap) {
+                    outputWrap.classList.remove('hidden');
+                    outputEl.innerHTML = buildHandoffOutputHtml(builtTemplate);
+                }
+
+                if (restoreRow) restoreRow.classList.add('hidden');
+                if (textarea) textarea.style.borderColor = '#2a2a2a';
+
+                // Persist draft immediately after successful parse.
+                const sessionId = currentStatus?.activeSession?.session_id || null;
+                await window.electronAPI.saveHandoffDraft({
+                    sessionId,
+                    rawInput: rawText,
+                    parsedJson: parsed,
+                    builtTemplate
+                });
+            } catch (err) {
+                const msg = err?.message || String(err);
+                const m = msg.match(/Missing or empty section:\s*(.*)$/);
+                const label = m ? m[1].trim() : 'UNKNOWN';
+                if (parseErrorEl) {
+                    parseErrorEl.textContent = `PARSE ERROR · MISSING SECTION: ${label}`;
+                    parseErrorEl.classList.remove('hidden');
+                }
+                if (outputWrap) outputWrap.classList.add('hidden');
+                if (refFilesWrap) refFilesWrap.classList.add('hidden');
+                handoffLatestBuiltTemplate = null;
+                if (textarea) textarea.style.borderColor = 'rgba(255, 75, 53, 0.4)';
+            }
+        });
+    }
+
+    if (restoreBtn && restoreRow) {
+        restoreBtn.addEventListener('click', async () => {
+            if (!textarea) return;
+            try {
+                if (!handoffRestoreDraft) return;
+                const rawInput = handoffRestoreDraft.rawInput || '';
+                const parsedJson = handoffRestoreDraft.parsedJson || '{}';
+                const builtTemplate = handoffRestoreDraft.builtTemplate || '';
+
+                textarea.value = rawInput;
+                textarea.style.borderColor = '#2a2a2a';
+
+                const parsed = JSON.parse(parsedJson);
+                handoffLatestBuiltTemplate = builtTemplate;
+
+                // Render reference + template without re-parsing.
+                if (referenceBody && refFilesWrap) {
+                    refFilesWrap.classList.remove('hidden');
+                    referenceBody.textContent = parsed.files_used || '';
+                }
+
+                if (outputEl && outputWrap) {
+                    outputWrap.classList.remove('hidden');
+                    outputEl.innerHTML = buildHandoffOutputHtml(builtTemplate);
+                }
+
+                if (parseErrorEl) {
+                    parseErrorEl.classList.add('hidden');
+                    parseErrorEl.textContent = '';
+                }
+
+                restoreRow.classList.add('hidden');
+                handoffRestoreDraft = null;
+                setParseEnabled();
+            } catch (e) {
+                console.error('[POPOVER] Restore draft failed:', e.message);
+            }
+        });
+    }
+
+    if (copyTemplateBtn) {
+        copyTemplateBtn.addEventListener('click', async () => {
+            if (!handoffLatestBuiltTemplate) return;
+            const original = copyTemplateBtn.textContent;
+            try {
+                await navigator.clipboard.writeText(handoffLatestBuiltTemplate);
+                copyTemplateBtn.textContent = 'COPIED ✓';
+                copyTemplateBtn.disabled = true;
+                setTimeout(() => {
+                    copyTemplateBtn.textContent = original;
+                    copyTemplateBtn.disabled = false;
+                }, 2500);
+            } catch (e) {
+                console.error('[POPOVER] Copy template failed:', e.message);
             }
         });
     }

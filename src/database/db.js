@@ -124,15 +124,29 @@ function initDb(dbPath) {
     CREATE TABLE IF NOT EXISTS chats (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       session_id   TEXT NOT NULL,
+      account_id   TEXT, -- Associated account for RCA
       name         TEXT NOT NULL,
       notes        TEXT,
       created_at   INTEGER NOT NULL,
-      FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+      FOREIGN KEY (session_id) REFERENCES sessions(session_id),
+      FOREIGN KEY (account_id) REFERENCES accounts(account_id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_chats_session_created
       ON chats(session_id, created_at);
   `);
+
+  // Migration: Ensure account_id exists in chats table
+  try {
+    const columns = db.prepare("PRAGMA table_info(chats)").all();
+    const hasAccountId = columns.some(col => col.name === 'account_id');
+    if (!hasAccountId) {
+      db.prepare("ALTER TABLE chats ADD COLUMN account_id TEXT REFERENCES accounts(account_id)").run();
+      console.log('DB · MIGRATION · ADDED account_id TO chats');
+    }
+  } catch (err) {
+    console.error('DB · MIGRATION ERROR ·', err.message);
+  }
 
   return db;
 }

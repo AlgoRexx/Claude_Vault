@@ -4,7 +4,7 @@
 **Status:** Draft
 **Depends on:** PRD v0.4.0
 **Last Updated:** 2026-03-18
-**Changes from v0.3.0:** Added TABLE: chats to §5. Added §11.7 Chat Tracking. Updated §6 File Suggestion Engine for unified FILES tab.
+**Changes from v0.3.0:** Added TABLE: chats to §5. Added §11.7 Chat Tracking. Adopted compact 4-tab IA where TRACK contains ACCTS + CHATS and OPS contains ACTIONS + HANDOFF.
 
 ---
 
@@ -398,10 +398,12 @@ Stores manual records of Claude conversation names linked to a session.
 CREATE TABLE chats (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   session_id   TEXT NOT NULL,
+  account_id   TEXT, -- Associated account for RCA
   name         TEXT NOT NULL,
   notes        TEXT,
   created_at   INTEGER NOT NULL,
-  FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+  FOREIGN KEY (session_id) REFERENCES sessions(session_id),
+  FOREIGN KEY (account_id) REFERENCES accounts(account_id)
 );
 
 CREATE INDEX idx_chats_session_created ON chats(session_id, created_at);
@@ -452,9 +454,9 @@ CREATE TABLE session_focus (
 
 ---
 
-## 6. File Suggestion Engine (FILES Tab - Suggested Section)
+## 6. File Suggestion Engine (Unified FILES Tab)
 
-The **FILES** tab combines both suggested and recently handled files. The **Suggested** section (top) surfacing relevant files for a new session.
+The **FILES** tab combines suggested and recent files into one deduplicated list with suggested items prioritized at the top.
 
 ### Input
 

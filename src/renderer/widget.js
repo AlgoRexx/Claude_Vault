@@ -26,9 +26,11 @@ function switchTab(tabId) {
         if (tabId === 'files') {
             loadFilesTab();
         }
-        if (tabId === 'accts') loadAccounts();
-        if (tabId === 'handoff') loadHandoff();
-        if (tabId === 'chats') loadChats();
+        if (tabId === 'track') {
+            loadAccounts();
+            loadChats();
+        }
+        if (tabId === 'ops') loadHandoff();
     } catch (err) {
         console.error(`[POPOVER] Load Tab Error: ${err.message}`);
     }
@@ -108,6 +110,11 @@ async function updateStatus() {
             }
         } else if (currentTab === 'files') {
             loadFilesTab();
+        } else if (currentTab === 'track') {
+            loadAccounts();
+            loadChats();
+        } else if (currentTab === 'ops') {
+            loadHandoff();
         }
 
         // Bottom status bar sync
@@ -320,7 +327,7 @@ async function handleAction(action, value) {
         } else if (action === 'open-vault') {
             window.electronAPI.showMain();
         } else if (action === 'suggest-files') {
-            switchTab('suggest');
+            switchTab('files');
         } else if (action === 'unlinked-files') {
             switchTab('files');
         } else if (action === 'run-cleanup') {
@@ -339,6 +346,27 @@ async function handleAction(action, value) {
         await updateStatus();
     } catch (err) {
         console.error(`[POPOVER] Action Error: ${err.message}`);
+    }
+}
+
+function switchTrackSubtab(mode) {
+    const acctsBtn = document.getElementById('track-sub-accts');
+    const chatsBtn = document.getElementById('track-sub-chats');
+    const acctsSection = document.getElementById('track-section-accts');
+    const chatsSection = document.getElementById('track-section-chats');
+
+    if (!acctsBtn || !chatsBtn || !acctsSection || !chatsSection) return;
+
+    const showAccts = mode === 'accts';
+    acctsBtn.classList.toggle('active', showAccts);
+    chatsBtn.classList.toggle('active', !showAccts);
+    acctsSection.classList.toggle('hidden', !showAccts);
+    chatsSection.classList.toggle('hidden', showAccts);
+
+    if (showAccts) {
+        loadAccounts();
+    } else {
+        loadChats();
     }
 }
 
@@ -890,10 +918,11 @@ async function loadChats() {
 
             const sessionAlias = c.session_alias || c.session_id.slice(0, 8);
             const sessionTag = `${c.session_id.slice(0, 8).toUpperCase()} ~ ${sessionAlias.toUpperCase()}`;
+            const accountHighlight = c.account_alias ? ` <span class="chat-account-highlight">· ${c.account_alias.toUpperCase()}</span>` : '';
 
             row.innerHTML = `
                 <div class="chat-info">
-                    <div class="chat-name">${escapeHtml(c.name)}</div>
+                    <div class="chat-name">${escapeHtml(c.name)}${accountHighlight}</div>
                     <div class="chat-meta">
                         <span class="chat-ts">${ts}</span>
                         <span class="chat-session-tag">${sessionTag}</span>
@@ -952,6 +981,11 @@ function init() {
     bind('btn-unlinked-files', 'unlinked-files');
     bind('btn-run-cleanup', 'run-cleanup');
     bind('btn-pause-watcher', 'pause-watcher');
+
+    const trackAcctsBtn = document.getElementById('track-sub-accts');
+    const trackChatsBtn = document.getElementById('track-sub-chats');
+    if (trackAcctsBtn) trackAcctsBtn.addEventListener('click', () => switchTrackSubtab('accts'));
+    if (trackChatsBtn) trackChatsBtn.addEventListener('click', () => switchTrackSubtab('chats'));
 
     // Suggestions Upload
     const uploadSuggestBtn = document.getElementById('btn-upload-suggested');
@@ -1187,8 +1221,14 @@ function init() {
             if (chatError) chatError.classList.add('hidden');
 
             try {
+                // Find focused account for RCA mapping
+                const accounts = await window.electronAPI.listAccounts();
+                const activeAccount = accounts.find(a => a.isFocused);
+                const accountId = activeAccount ? activeAccount.account_id : null;
+
                 await window.electronAPI.addChat({
                     sessionId: activeSessionId,
+                    accountId: accountId,
                     name,
                     notes
                 });

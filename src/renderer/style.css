@@ -153,6 +153,31 @@ body {
     border-bottom: 2px solid var(--accent); 
 }
 
+.track-toggle-row {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+}
+
+.track-sub-tab {
+    flex: 1;
+    padding: 6px 0;
+    text-align: center;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+
+.track-sub-tab:hover {
+    color: var(--text-secondary);
+}
+
+.track-sub-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
 /* PANELS */
 .panel-container {
     flex: 1;
@@ -733,6 +758,15 @@ sup { color: var(--accent); font-size: 70%; vertical-align: super; }
     font-size: 13px;
     font-weight: 600;
     color: #F0EDE8;
+}
+
+.chat-account-highlight {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-left: 4px;
 }
 
 .chat-meta {

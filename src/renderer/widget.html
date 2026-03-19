@@ -33,10 +33,8 @@
         <div class="tab-bar">
             <div id="tab-session" class="tab-item active mono-small">SESSION</div>
             <div id="tab-files" class="tab-item mono-small">FILES</div>
-            <div id="tab-accts" class="tab-item mono-small">ACCTS</div>
-            <div id="tab-actions" class="tab-item mono-small">ACTIONS</div>
-            <div id="tab-handoff" class="tab-item mono-small">HANDOFF</div>
-            <div id="tab-chats" class="tab-item mono-small">CHATS</div>
+            <div id="tab-track" class="tab-item mono-small">TRACK</div>
+            <div id="tab-ops" class="tab-item mono-small">OPS</div>
         </div>
 
         <!-- Tab Panels -->
@@ -122,29 +120,66 @@
                 </div>
             </div>
 
-            <!-- ACCTS Panel (account limit tracking) -->
-            <div id="panel-accts" class="panel">
-                <div class="section-label" style="padding: 10px 14px 0;">Account Limit Tracking</div>
-
-                <div class="acct-form">
-                    <input id="acct-alias" class="acct-input" placeholder="ALIAS (required)"/>
-                    <input id="acct-email" class="acct-input" placeholder="EMAIL (optional)"/>
-                    <select id="acct-plan" class="acct-select">
-                        <option value="FREE">FREE</option>
-                        <option value="PRO">PRO</option>
-                        <option value="MAX">MAX</option>
-                        <option value="TEAM">TEAM</option>
-                    </select>
-                    <button id="btn-add-account" class="action-btn-sharp">ADD ACCOUNT</button>
+            <!-- TRACK Panel (ACCTS + CHATS) -->
+            <div id="panel-track" class="panel">
+                <div class="track-toggle-row">
+                    <button id="track-sub-accts" class="track-sub-tab active mono-small">ACCTS</button>
+                    <button id="track-sub-chats" class="track-sub-tab mono-small">CHATS</button>
                 </div>
 
-                <div id="accounts-form-error" class="mono-small hidden" style="padding: 0 14px 10px; color: var(--accent);"></div>
+                <div id="track-section-accts">
+                    <div class="section-label" style="padding: 10px 14px 0;">Account Limit Tracking</div>
 
-                <div id="accounts-list"></div>
+                    <div class="acct-form">
+                        <input id="acct-alias" class="acct-input" placeholder="ALIAS (required)"/>
+                        <input id="acct-email" class="acct-input" placeholder="EMAIL (optional)"/>
+                        <select id="acct-plan" class="acct-select">
+                            <option value="FREE">FREE</option>
+                            <option value="PRO">PRO</option>
+                            <option value="MAX">MAX</option>
+                            <option value="TEAM">TEAM</option>
+                        </select>
+                        <button id="btn-add-account" class="action-btn-sharp">ADD ACCOUNT</button>
+                    </div>
+
+                    <div id="accounts-form-error" class="mono-small hidden" style="padding: 0 14px 10px; color: var(--accent);"></div>
+                    <div id="accounts-list"></div>
+                </div>
+
+                <div id="track-section-chats" class="hidden">
+                    <div class="kv-block" style="padding-top: 14px; border-bottom: 1px solid #222;">
+                        <div class="kv-row" style="margin-bottom: 0;">
+                            <span class="mono-small" style="color: #555;">SESSION</span>
+                            <span id="chats-active-session" class="mono-value" style="color: #9CA3AF;">NONE</span>
+                        </div>
+                    </div>
+
+                    <div class="actions-section" style="padding-top: 14px; border-bottom: 1px solid #222;">
+                        <div class="section-label">CHAT NAME</div>
+                        <textarea id="chat-input-name" class="handoff-textarea" style="height: 48px; margin-bottom: 10px;" placeholder="e.g., Python debugging session"></textarea>
+                        
+                        <div class="section-label">NOTES (OPTIONAL)</div>
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <textarea id="chat-input-notes" class="handoff-textarea" style="height: 48px; flex: 1; margin: 0;" placeholder="e.g., context before 5hr limit"></textarea>
+                            <button id="btn-add-chat" class="action-btn-sharp" style="height: 48px; width: 80px; font-size: 11px; font-weight: 700; color: #FFF; border-color: #333;">+ ADD</button>
+                        </div>
+                        <div id="chat-form-error" class="handoff-inline-error hidden" style="margin: 6px 0 0;"></div>
+                    </div>
+
+                    <div class="actions-section" style="padding-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <div class="section-label" style="margin-bottom: 0;">CHAT HISTORY</div>
+                            <div class="mono-small" style="color: var(--accent);"><span id="chat-history-count">0</span> ENTRIES</div>
+                        </div>
+                        <div id="chat-history-list">
+                            <!-- Loaded via JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- ACTIONS Panel (DG-050) -->
-            <div id="panel-actions" class="panel">
+            <!-- OPS Panel (ACTIONS + HANDOFF) -->
+            <div id="panel-ops" class="panel">
                 <div class="actions-section">
                     <div class="section-label">SET SESSION STATE</div>
                     <button id="btn-state-active" class="state-btn">
@@ -171,12 +206,9 @@
                         <button id="btn-pause-watcher" class="action-btn-sharp">PAUSE WATCHER</button>
                     </div>
                 </div>
-            </div>
-
-        <!-- HANDOFF Panel -->
-        <div id="panel-handoff" class="panel">
-            <div class="handoff-step-title">STEP 1 — COPY THIS PROMPT INTO CLAUDE</div>
-            <div id="handoff-prompt-block" class="handoff-prompt-block">
+                <div class="handoff-divider"></div>
+                <div class="handoff-step-title">STEP 1 — COPY THIS PROMPT INTO CLAUDE</div>
+                <div id="handoff-prompt-block" class="handoff-prompt-block">
 Summarize the entire conversation in this STRICT format:
 
 1. OBJECTIVE:
@@ -187,63 +219,31 @@ Summarize the entire conversation in this STRICT format:
 6. NEXT STEPS:
 
 Do not write anything outside this structure.
-            </div>
-            <button id="btn-copy-handoff-prompt" class="handoff-copy-prompt-btn">COPY PROMPT</button>
-            <div class="handoff-divider"></div>
+                </div>
+                <button id="btn-copy-handoff-prompt" class="handoff-copy-prompt-btn">COPY PROMPT</button>
+                <div class="handoff-divider"></div>
 
-            <div class="handoff-step-title">STEP 2 — PASTE CLAUDE'S RESPONSE, GET TEMPLATE</div>
-            <div id="handoff-restore-row" class="handoff-restore-row hidden">
-                <span id="handoff-restore-label">Restore last draft?</span>
-                <span id="handoff-restore-ts" class="handoff-restore-ts"></span>
-                <button id="btn-restore-handoff" class="handoff-restore-btn">RESTORE</button>
-            </div>
+                <div class="handoff-step-title">STEP 2 — PASTE CLAUDE'S RESPONSE, GET TEMPLATE</div>
+                <div id="handoff-restore-row" class="handoff-restore-row hidden">
+                    <span id="handoff-restore-label">Restore last draft?</span>
+                    <span id="handoff-restore-ts" class="handoff-restore-ts"></span>
+                    <button id="btn-restore-handoff" class="handoff-restore-btn">RESTORE</button>
+                </div>
 
-            <textarea id="handoff-input" class="handoff-textarea" placeholder="Paste Claude's 6-section summary here..."></textarea>
-            <button id="btn-parse-handoff" class="handoff-parse-btn" disabled>PARSE → BUILD TEMPLATE</button>
-            <div id="handoff-parse-error" class="handoff-inline-error hidden"></div>
+                <textarea id="handoff-input" class="handoff-textarea" placeholder="Paste Claude's 6-section summary here..."></textarea>
+                <button id="btn-parse-handoff" class="handoff-parse-btn" disabled>PARSE → BUILD TEMPLATE</button>
+                <div id="handoff-parse-error" class="handoff-inline-error hidden"></div>
 
-            <div id="handoff-reference-files" class="handoff-reference-files hidden">
-                <div class="handoff-ref-title">FILES USED (REFERENCE)</div>
-                <div id="handoff-reference-files-body" class="handoff-reference-body"></div>
-            </div>
+                <div id="handoff-reference-files" class="handoff-reference-files hidden">
+                    <div class="handoff-ref-title">FILES USED (REFERENCE)</div>
+                    <div id="handoff-reference-files-body" class="handoff-reference-body"></div>
+                </div>
 
-            <div id="handoff-output-wrapper" class="handoff-output-wrapper hidden">
-                <div id="handoff-output" class="handoff-output"></div>
-                <button id="btn-copy-handoff-template" class="handoff-copy-template-btn">COPY TEMPLATE</button>
-            </div>
-        </div>
-
-        <!-- CHATS Panel -->
-        <div id="panel-chats" class="panel">
-            <div class="kv-block" style="padding-top: 14px; border-bottom: 1px solid #222;">
-                <div class="kv-row" style="margin-bottom: 0;">
-                    <span class="mono-small" style="color: #555;">SESSION</span>
-                    <span id="chats-active-session" class="mono-value" style="color: #9CA3AF;">NONE</span>
+                <div id="handoff-output-wrapper" class="handoff-output-wrapper hidden">
+                    <div id="handoff-output" class="handoff-output"></div>
+                    <button id="btn-copy-handoff-template" class="handoff-copy-template-btn">COPY TEMPLATE</button>
                 </div>
             </div>
-
-            <div class="actions-section" style="padding-top: 14px; border-bottom: 1px solid #222;">
-                <div class="section-label">CHAT NAME</div>
-                <textarea id="chat-input-name" class="handoff-textarea" style="height: 48px; margin-bottom: 10px;" placeholder="e.g., Python debugging session"></textarea>
-                
-                <div class="section-label">NOTES (OPTIONAL)</div>
-                <div style="display: flex; gap: 8px; align-items: flex-start;">
-                    <textarea id="chat-input-notes" class="handoff-textarea" style="height: 48px; flex: 1; margin: 0;" placeholder="e.g., context before 5hr limit"></textarea>
-                    <button id="btn-add-chat" class="action-btn-sharp" style="height: 48px; width: 80px; font-size: 11px; font-weight: 700; color: #FFF; border-color: #333;">+ ADD</button>
-                </div>
-                <div id="chat-form-error" class="handoff-inline-error hidden" style="margin: 6px 0 0;"></div>
-            </div>
-
-            <div class="actions-section" style="padding-top: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <div class="section-label" style="margin-bottom: 0;">CHAT HISTORY</div>
-                    <div class="mono-small" style="color: var(--accent);"><span id="chat-history-count">0</span> ENTRIES</div>
-                </div>
-                <div id="chat-history-list">
-                    <!-- Loaded via JS -->
-                </div>
-            </div>
-        </div>
         </div>
 
         <!-- Status Bar (DG-051) -->

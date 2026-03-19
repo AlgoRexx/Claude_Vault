@@ -4,7 +4,7 @@
 **Status:** Draft
 **Owner:** TBD
 **Last Updated:** 2026-03-18
-**Changes from v0.3.0:** Merged FILES and SUGGEST tabs into unified FILES tab. Added §5.8 Chat History Tracking (CHATS tab).
+**Changes from v0.3.0:** Adopted compact 4-tab IA (`SESSION | FILES | TRACK | OPS`) while preserving all existing capabilities. TRACK groups ACCTS + CHATS and OPS groups ACTIONS + HANDOFF.
 
 ---
 
@@ -128,7 +128,7 @@ This PRD explicitly does not cover:
 > As a user who owns multiple Claude.ai accounts, I want to log when an account hits a usage limit and see a live countdown to its reset — so I always know which accounts are available and can switch without guessing.
 
 **Acceptance criteria:**
-- Accounts are manually registered in the ACCTS tab with: alias (required), email (optional), plan (FREE / PRO / MAX / TEAM)
+- Accounts are manually registered in the TRACK tab (ACCTS section) with: alias (required), email (optional), plan (FREE / PRO / MAX / TEAM)
 - Each account independently tracks three limit types: `5HR`, `DAILY`, `WEEKLY`
 - Logging a hit on a `(account, limit_type)` pair records `hit_at` and computes `reset_at = hit_at + window_ms` from config
 - A live countdown shows time remaining until reset for each active limit — updated every second in the UI
@@ -147,20 +147,22 @@ This PRD explicitly does not cover:
 > As a user, I want to manually record the names of the Claude conversations I start and associate them with my current session — so I can easily find the exact chat that corresponds to a set of ingested files later.
 
 **Acceptance criteria:**
-- A new tab labeled **CHATS** is added to the navigation bar.
-- The tab displays the currently focused session's alias or hash at the top.
+- The TRACK tab includes a **CHATS** section.
+- The CHATS section displays the currently focused session's alias or hash at the top.
 - A form allows inputting a **Chat Name** (required) and **Notes** (optional).
 - Clicking **+ ADD** saves the entry with the current session ID and a timestamp.
 - The **Chat History** section shows a list of all chats associated with the active session, sorted by recency (newest first).
 - The latest chat entry is visually highlighted with a red vertical bar and a "LATEST" badge.
-- Each entry shows: Chat Name, Timestamp, Session ID ~ Alias, and any Notes (prefixed with '↳').
+- Each entry shows: **Chat Name · Account Alias**, Timestamp, Session ID ~ Alias, and any Notes (prefixed with '↳').
 - Users can delete any chat entry with a confirmation prompt.
 - The list updates automatically when switching sessions or adding new entries.
+
+### 5.7 Handoff Summary & Template
 
 > As a user nearing a session's context limit, I want to ask Claude for a structured summary, paste it into the widget, and get a ready-to-copy handoff prompt — so the next chat (on any account) picks up exactly where this one left off.
 
 **Acceptance criteria:**
-- The HANDOFF tab stores the summary prompt (§5.7.1) and presents it with a one-click COPY button — the user never has to type or remember it
+- The OPS tab (HANDOFF section) stores the summary prompt (§5.7.1) and presents it with a one-click COPY button — the user never has to type or remember it
 - After pasting Claude's structured response into the widget textarea, clicking PARSE → BUILD TEMPLATE produces the filled handoff template (§5.7.2) with no API call, no network request — parsing is a client-side regex operation
 - The `FILES USED` section from Claude's output is shown in the widget as a reference checklist only (it does not appear as text in the copied template)
 - The copied handoff template's `FILES:` section contains only `(Re-upload the required files now)` on the following line
@@ -173,7 +175,7 @@ This PRD explicitly does not cover:
 
 ### 5.7.1 Summary Prompt (User Pastes Into Claude)
 
-This exact prompt is stored in the widget and copyable from the HANDOFF tab with one click. It is not configurable.
+This exact prompt is stored in the widget (OPS → HANDOFF section) and copyable with one click. It is not configurable.
 
 ```
 Summarize the entire conversation in this STRICT format:
